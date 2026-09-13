@@ -18,6 +18,6 @@ function nbInitAnalysisPage(opts) {
     metaEl.textContent = meta;
   }
   if (backLink) {
-    backLink.href = `index.html?patient=${patient.id}`;
+    backLink.href = `/caretaker/index.html?patient=${patient.id}`;
   }
 }
