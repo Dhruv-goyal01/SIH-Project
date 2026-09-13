@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Training Profile · NeuroBloom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/caretaker/style.css">
+</head>
+
+<body>
+    <div class="page-wrap">
+
+        <a class="back-link" id="backLink" href="/caretaker/index.html">‹ Back to Dashboard</a>
+
+        <div class="page-title-row">
+            <div class="g-icon memory">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="3.4" />
+                    <path d="M5.5 20c1-3.6 3.8-5.5 6.5-5.5s5.5 1.9 6.5 5.5" />
+                </svg>
+            </div>
+            <div>
+                <h1>Add Training Profile</h1>
+                <p>A face for <span id="patientNameLabel">this patient</span> to learn to recognise</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="training-form-photo">
+                <div class="training-avatar-wrap training-form-avatar-wrap">
+                    <div class="training-avatar" id="photoPreview">+</div>
+                </div>
+                <label class="training-upload-btn" for="photoInput">Upload photo</label>
+                <input type="file" id="photoInput" accept="image/*" hidden>
+            </div>
+
+            <div class="form-field">
+                <label for="nameInput">Name</label>
+                <input type="text" id="nameInput" placeholder="e.g. Priya" autocomplete="off">
+            </div>
+            <div class="form-field">
+                <label for="relationInput">Relation (optional)</label>
+                <input type="text" id="relationInput" placeholder="e.g. Daughter, Neighbour, Friend"
+                    autocomplete="off">
+            </div>
+            <div class="form-field" id="nameErrorWrap" style="display:none;">
+                <span style="color:#B23A3A; font-size:12.5px; font-weight:700;">Please enter a name before
+                    saving.</span>
+            </div>
+
+            <button class="live-location-btn" id="saveProfileBtn" style="margin-top:6px;">Save Profile</button>
+        </div>
+
+    </div>
+
+    <script src="/caretaker/patients.js"></script>
+    <script>
+        const nbParams = new URLSearchParams(window.location.search);
+        const nbPatientId = nbParams.get('patient') || nbGetActivePatientId();
+        const nbPatient = nbGetPatient(nbPatientId);
+
+        document.getElementById('patientNameLabel').textContent = nbPatient.name;
+        document.getElementById('backLink').href = `/caretaker/index.html?patient=${nbPatientId}`;
+
+        let nbPhotoDataUrl = null;
+        const photoInput = document.getElementById('photoInput');
+        const photoPreview = document.getElementById('photoPreview');
+
+        photoInput.addEventListener('change', () => {
+            const file = photoInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                nbPhotoDataUrl = reader.result;
+                photoPreview.style.backgroundImage = `url('${nbPhotoDataUrl}')`;
+                photoPreview.textContent = '';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('saveProfileBtn').addEventListener('click', () => {
+            const name = document.getElementById('nameInput').value.trim();
+            const relation = document.getElementById('relationInput').value.trim();
+            const errorWrap = document.getElementById('nameErrorWrap');
+
+            if (!name) {
+                errorWrap.style.display = 'block';
+                document.getElementById('nameInput').focus();
+                return;
+            }
+            errorWrap.style.display = 'none';
+
+            const fullName = relation ? `${name} (${relation})` : name;
+            nbAddTrainingProfile(nbPatientId, {
+                id: `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+                name: fullName,
+                initial: name.charAt(0).toUpperCase(),
+                photo: nbPhotoDataUrl
+            });
+
+            window.location.href = `/caretaker/index.html?patient=${nbPatientId}`;
+        });
+    </script>
+</body>
+
+</html>

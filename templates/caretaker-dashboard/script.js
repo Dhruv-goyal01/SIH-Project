@@ -77,7 +77,7 @@ function nbRenderPatient(id){
 
   document.querySelectorAll('.game-row[data-game]').forEach(row => {
     const type = row.getAttribute('data-game');
-    row.href = `analysis-${type}.html?patient=${patient.id}`;
+    row.href = `/caretaker/analysis-${type}.html?patient=${patient.id}`;
   });
 
   // Today's Schedule
@@ -99,8 +99,57 @@ function nbRenderPatient(id){
   // Care Logs 
   nbRenderCareLog(patient.id);
 
+  // Training Profiles
+  nbRenderTrainingProfiles(patient.id);
+
   // Re-apply translation 
   if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
+}
+
+// Training Profiles (faces the patient is learning to recognise)
+function nbRenderTrainingProfiles(id){
+  const grid = document.getElementById('trainingGrid');
+  if (!grid) return;
+
+  const profiles = nbGetTrainingProfiles(id);
+  grid.innerHTML = '';
+
+  if (profiles.length === 0) {
+    const empty = document.createElement('a');
+    empty.className = 'training-empty';
+    empty.href = `/caretaker/add-training-profile.html?patient=${id}`;
+    empty.innerHTML = `
+      <div class="training-empty-circle">+</div>
+      <span class="training-name">Add profile</span>
+    `;
+    grid.appendChild(empty);
+    return;
+  }
+
+  profiles.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'training-profile';
+
+    const avatarBg = p.photo ? ` style="background-image:url('${p.photo}')"` : '';
+    const initials = p.photo ? '' : (p.initial || p.name.charAt(0));
+
+    item.innerHTML = `
+      <div class="training-avatar-wrap">
+        <div class="training-avatar"${avatarBg}>${initials}</div>
+        <a class="training-avatar-add" href="/caretaker/add-training-profile.html?patient=${id}"
+           title="Add more training photos for ${p.name}" aria-label="Add more training photos for ${p.name}">+</a>
+      </div>
+      <span class="training-name" title="${p.name}">${p.name}</span>
+    `;
+    grid.appendChild(item);
+  });
+}
+
+const trainingAddBtn = document.getElementById('trainingAddBtn');
+if (trainingAddBtn) {
+  trainingAddBtn.addEventListener('click', () => {
+    window.location.href = `/caretaker/add-training-profile.html?patient=${nbGetActivePatientId()}`;
+  });
 }
 
 function setText(id, text){

@@ -139,7 +139,6 @@ body {
 
 .settings-wrap { position: relative; }
 .settings-panel {
-  display: none;
   position: absolute;
   right: 0;
   top: 52px;
@@ -150,8 +149,37 @@ body {
   box-shadow: var(--shadow-pop);
   padding: 18px;
   z-index: 20;
+  /* Closed state: hidden, slightly raised and shrunk so it can slide + fade in */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px) scale(0.96);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.28s;
 }
-.settings-panel.open { display: block; }
+.settings-panel.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Settings button now shows an icon + label instead of a bare glyph */
+.icon-btn.settings-btn {
+  width: auto;
+  height: 40px;
+  border-radius: 999px;
+  padding: 0 16px 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.icon-btn.settings-btn .icon-btn-icon { font-size: 16px; line-height: 1; display: inline-flex; }
 
 .settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .settings-header h3 { margin: 0; font-size: 16px; color: var(--teal-deep); }
@@ -455,9 +483,10 @@ body {
   font-size: 18px;
   flex-shrink: 0;
 }
-.g-icon.memory { background: var(--purple-tint); }
-.g-icon.best { background: var(--yellow-tint); }
-.g-icon.logic { background: var(--blue-tint); }
+.g-icon svg { width: 20px; height: 20px; }
+.g-icon.memory { background: var(--purple-tint); color: var(--purple); }
+.g-icon.best { background: var(--yellow-tint); color: #B8860A; }
+.g-icon.logic { background: var(--blue-tint); color: var(--blue); }
 
 .g-info { flex: 1; }
 .g-name { font-weight: 800; font-size: 14px; color: var(--ink); }
@@ -547,6 +576,152 @@ body {
   color: var(--ink);
 }
 .quick-note:focus { outline: 2px solid var(--teal); background: var(--white); }
+
+/* Training Profiles section */
+.row-3 { grid-template-columns: 1fr; }
+
+.training-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.training-head h2 { margin: 0; }
+
+.training-add-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--teal);
+  color: var(--white);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.training-add-btn:hover { background: var(--teal-deep); transform: scale(1.06); }
+
+.training-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 20px 12px;
+  margin-top: 16px;
+}
+
+.training-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.training-avatar-wrap { position: relative; width: 72px; height: 72px; }
+
+.training-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--purple-tint);
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--teal-deep);
+  background-size: cover;
+  background-position: center;
+}
+
+.training-avatar-add {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  border: 2px solid var(--white);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.training-avatar-add:hover { background: var(--teal-deep); transform: scale(1.08); }
+
+.training-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  max-width: 84px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.training-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+.training-empty-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px dashed var(--line);
+  background: var(--cream-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+  font-size: 28px;
+  font-weight: 800;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.training-empty:hover .training-empty-circle { background: var(--teal-tint); border-color: var(--teal); }
+
+/* Add Training Profile standalone page */
+.training-form-photo { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
+.training-form-avatar-wrap { width: 96px; height: 96px; }
+.training-form-avatar-wrap .training-avatar { width: 96px; height: 96px; font-size: 30px; }
+.training-upload-btn {
+  border: 1px solid var(--line);
+  background: var(--cream-deep);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--teal-deep);
+  cursor: pointer;
+  display: inline-block;
+}
+.training-upload-btn:hover { background: var(--teal-tint); }
+
+.form-field { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.form-field input {
+  border: 1px solid var(--line);
+  background: var(--cream-deep);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+.form-field input:focus { outline: 2px solid var(--teal); background: var(--white); }
 
 /*  Controls footer  */
 .controls-card {
@@ -652,7 +827,7 @@ body {
     top: 50%;
     left: 16px;
     right: 16px;
-    transform: translateY(-50%);
+    transform: translateY(-50%) scale(0.96);
     width: auto;
     max-width: 360px;
     margin: 0 auto;
@@ -660,6 +835,9 @@ body {
     max-height: calc(100vh - 40px);
     overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+  .settings-panel.open {
+    transform: translateY(-50%) scale(1);
   }
 
   .banner { padding: 16px; gap: 12px; }

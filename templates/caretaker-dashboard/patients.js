@@ -92,6 +92,34 @@ const NB_PATIENTS = [
 
 const NB_ACTIVE_KEY = 'nb_active_patient_id';
 const NB_CARELOG_KEY_PREFIX = 'nb_care_log_';
+const NB_TRAINING_KEY_PREFIX = 'nb_training_profiles_';
+
+// Seeded training profiles so the section doesn't look empty on
+// first load. New caretaker-added profiles are saved to
+// localStorage per patient and merge in on top of these.
+const NB_DEFAULT_TRAINING_PROFILES = {
+  'arundhati': [
+    { id: 'seed-priya', name: 'Priya', initial: 'P' },
+    { id: 'seed-arjun', name: 'Arjun', initial: 'A' },
+    { id: 'seed-ravi', name: 'Ravi', initial: 'R' },
+    { id: 'seed-meena', name: 'Meena', initial: 'M' },
+    { id: 'seed-doctor', name: 'Dr. Sharma', initial: 'S' }
+  ],
+  'kamala-devi': [
+    { id: 'seed-sunil', name: 'Sunil', initial: 'S' },
+    { id: 'seed-anita', name: 'Anita', initial: 'A' },
+    { id: 'seed-guddu', name: 'Guddu', initial: 'G' },
+    { id: 'seed-nurse', name: 'Kavita', initial: 'K' },
+    { id: 'seed-friend', name: 'Shanti', initial: 'S' }
+  ],
+  'rakesh-verma': [
+    { id: 'seed-neha', name: 'Neha', initial: 'N' },
+    { id: 'seed-vikram', name: 'Vikram', initial: 'V' },
+    { id: 'seed-pooja', name: 'Pooja', initial: 'P' },
+    { id: 'seed-driver', name: 'Ramu', initial: 'R' },
+    { id: 'seed-doc2', name: 'Mehta', initial: 'M' }
+  ]
+};
 
 function nbGetPatients(){
   return NB_PATIENTS;
@@ -126,4 +154,24 @@ function nbRemoveCareLogEntry(id, index){
   const entries = nbGetCareLog(id);
   entries.splice(index, 1);
   localStorage.setItem(NB_CARELOG_KEY_PREFIX + id, JSON.stringify(entries));
+}
+
+//  Training profiles (faces the patient is learning to recognise) 
+function nbGetTrainingProfiles(id){
+  const raw = localStorage.getItem(NB_TRAINING_KEY_PREFIX + id);
+  if (raw) {
+    try { return JSON.parse(raw); } catch { /* fall through to defaults */ }
+  }
+  return NB_DEFAULT_TRAINING_PROFILES[id] ? [...NB_DEFAULT_TRAINING_PROFILES[id]] : [];
+}
+
+function nbSaveTrainingProfiles(id, list){
+  localStorage.setItem(NB_TRAINING_KEY_PREFIX + id, JSON.stringify(list));
+}
+
+function nbAddTrainingProfile(id, profile){
+  const list = nbGetTrainingProfiles(id);
+  list.push(profile);
+  nbSaveTrainingProfiles(id, list);
+  return list;
 }
