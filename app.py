@@ -1,5 +1,5 @@
 """
-NeuroBloom — Consolidated Flask Backend
+NeuroBloom — Consolidated Flask Backend (PostgreSQL edition)
 Serves all game frontends and provides a unified REST API.
 
 Pages:
@@ -24,7 +24,7 @@ APIs:
   Phrase Recall game:
     POST /api/phrase-recall/game/complete
 
-  Caretaker (backend only — no HTML entry point yet):
+  Caretaker:
     GET  /api/caretaker/patients
     GET  /api/caretaker/patients/<patient_id>/summary
     GET  /api/caretaker/patients/<patient_id>/game-history
@@ -159,13 +159,16 @@ def create_patient():
         return jsonify({"error": "Name is required"}), 400
 
     conn = get_db()
-    cursor = conn.execute(
-        "INSERT INTO patients (name, age, preferred_language) VALUES (?, ?, ?)",
-        (name, age, preferred_language),
-    )
-    conn.commit()
-    patient_id = cursor.lastrowid
-    conn.close()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO patients (name, age, preferred_language) VALUES (%s, %s, %s) RETURNING id",
+                (name, age, preferred_language),
+            )
+            patient_id = cur.fetchone()["id"]
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({
         "message": "Patient created successfully",
@@ -177,8 +180,12 @@ def create_patient():
 @app.route("/api/patients", methods=["GET"])
 def list_patients():
     conn = get_db()
-    rows = conn.execute("SELECT id, name, age, preferred_language FROM patients").fetchall()
-    conn.close()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, name, age, preferred_language FROM patients")
+            rows = cur.fetchall()
+    finally:
+        conn.close()
     return jsonify({"patients": [dict(r) for r in rows]}), 200
 
 
@@ -200,18 +207,21 @@ def memory_card_start():
         return jsonify({"error": "patient_id is required"}), 400
 
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
-        conn.close()
-        return jsonify({"error": "Patient not found"}), 404
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            patient = cur.fetchone()
+            if not patient:
+                return jsonify({"error": "Patient not found"}), 404
 
-    cursor = conn.execute(
-        "INSERT INTO memory_card_sessions (patient_id, game_type, difficulty) VALUES (?, ?, ?)",
-        (patient_id, game_type, difficulty),
-    )
-    conn.commit()
-    session_id = cursor.lastrowid
-    conn.close()
+            cur.execute(
+                "INSERT INTO memory_card_sessions (patient_id, game_type, difficulty) VALUES (%s, %s, %s) RETURNING id",
+                (patient_id, game_type, difficulty),
+            )
+            session_id = cur.fetchone()["id"]
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({
         "message": "Game started successfully",
@@ -240,23 +250,26 @@ def memory_card_complete():
     score = perf["score"]
 
     conn = get_db()
-    session = conn.execute(
-        "SELECT id FROM memory_card_sessions WHERE id = ?", (session_id,)
-    ).fetchone()
-    if not session:
-        conn.close()
-        return jsonify({"error": "Game session not found"}), 404
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM memory_card_sessions WHERE id = %s", (session_id,)
+            )
+            session = cur.fetchone()
+            if not session:
+                return jsonify({"error": "Game session not found"}), 404
 
-    conn.execute(
-        """UPDATE memory_card_sessions
-           SET completed_at = CURRENT_TIMESTAMP,
-               moves = ?, time_taken = ?, mistakes = ?,
-               score = ?, accuracy = ?, completed = ?
-           WHERE id = ?""",
-        (moves, time_taken, mistakes, score, accuracy, completed, session_id),
-    )
-    conn.commit()
-    conn.close()
+            cur.execute(
+                """UPDATE memory_card_sessions
+                   SET completed_at = CURRENT_TIMESTAMP,
+                       moves = %s, time_taken = %s, mistakes = %s,
+                       score = %s, accuracy = %s, completed = %s
+                   WHERE id = %s""",
+                (moves, time_taken, mistakes, score, accuracy, completed, session_id),
+            )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({
         "message": "Game completed successfully",
@@ -271,20 +284,23 @@ def memory_card_complete():
 @app.route("/api/memory-card/game/history/<int:patient_id>", methods=["GET"])
 def memory_card_history(patient_id):
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
-        conn.close()
-        return jsonify({"error": "Patient not found"}), 404
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
 
-    sessions = conn.execute(
-        """SELECT id, game_type, difficulty, started_at, completed_at,
-                  moves, time_taken, mistakes, score, accuracy, completed
-           FROM memory_card_sessions
-           WHERE patient_id = ? AND completed = 1
-           ORDER BY id DESC""",
-        (patient_id,),
-    ).fetchall()
-    conn.close()
+            cur.execute(
+                """SELECT id, game_type, difficulty, started_at, completed_at,
+                          moves, time_taken, mistakes, score, accuracy, completed
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1
+                   ORDER BY id DESC""",
+                (patient_id,),
+            )
+            sessions = cur.fetchall()
+    finally:
+        conn.close()
 
     return jsonify({
         "patient_id": patient_id,
@@ -295,42 +311,46 @@ def memory_card_history(patient_id):
 @app.route("/api/memory-card/game/progress/<int:patient_id>", methods=["GET"])
 def memory_card_progress(patient_id):
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
+
+            cur.execute(
+                """SELECT COUNT(*) AS total_games,
+                          AVG(accuracy) AS average_accuracy,
+                          AVG(time_taken) AS average_time,
+                          AVG(mistakes) AS average_mistakes,
+                          MAX(score) AS best_score
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1""",
+                (patient_id,),
+            )
+            stats = cur.fetchone()
+
+            cur.execute(
+                """SELECT accuracy, score, time_taken, mistakes
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1
+                   ORDER BY id DESC LIMIT 1""",
+                (patient_id,),
+            )
+            latest = cur.fetchone()
+    finally:
         conn.close()
-        return jsonify({"error": "Patient not found"}), 404
-
-    stats = conn.execute(
-        """SELECT COUNT(*) AS total_games,
-                  AVG(accuracy) AS average_accuracy,
-                  AVG(time_taken) AS average_time,
-                  AVG(mistakes) AS average_mistakes,
-                  MAX(score) AS best_score
-           FROM memory_card_sessions
-           WHERE patient_id = ? AND completed = 1""",
-        (patient_id,),
-    ).fetchone()
-
-    latest = conn.execute(
-        """SELECT accuracy, score, time_taken, mistakes
-           FROM memory_card_sessions
-           WHERE patient_id = ? AND completed = 1
-           ORDER BY id DESC LIMIT 1""",
-        (patient_id,),
-    ).fetchone()
-    conn.close()
 
     return jsonify({
         "patient_id": patient_id,
         "progress": {
             "total_games": stats["total_games"],
-            "average_accuracy": round(stats["average_accuracy"] or 0, 2),
-            "average_time": round(stats["average_time"] or 0, 2),
-            "average_mistakes": round(stats["average_mistakes"] or 0, 2),
-            "best_score": round(stats["best_score"] or 0, 2),
-            "latest_accuracy": round(latest["accuracy"] if latest else 0, 2),
-            "latest_score": round(latest["score"] if latest else 0, 2),
-            "latest_time": round(latest["time_taken"] if latest else 0, 2),
+            "average_accuracy": round(float(stats["average_accuracy"] or 0), 2),
+            "average_time": round(float(stats["average_time"] or 0), 2),
+            "average_mistakes": round(float(stats["average_mistakes"] or 0), 2),
+            "best_score": round(float(stats["best_score"] or 0), 2),
+            "latest_accuracy": round(float(latest["accuracy"]) if latest else 0, 2),
+            "latest_score": round(float(latest["score"]) if latest else 0, 2),
+            "latest_time": round(float(latest["time_taken"]) if latest else 0, 2),
             "latest_mistakes": latest["mistakes"] if latest else 0,
         },
     }), 200
@@ -339,19 +359,22 @@ def memory_card_progress(patient_id):
 @app.route("/api/memory-card/game/progress/history/<int:patient_id>", methods=["GET"])
 def memory_card_progress_history(patient_id):
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
-        conn.close()
-        return jsonify({"error": "Patient not found"}), 404
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
 
-    sessions = conn.execute(
-        """SELECT id, accuracy, score, time_taken, mistakes, difficulty, completed_at
-           FROM memory_card_sessions
-           WHERE patient_id = ? AND completed = 1
-           ORDER BY id ASC""",
-        (patient_id,),
-    ).fetchall()
-    conn.close()
+            cur.execute(
+                """SELECT id, accuracy, score, time_taken, mistakes, difficulty, completed_at
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1
+                   ORDER BY id ASC""",
+                (patient_id,),
+            )
+            sessions = cur.fetchall()
+    finally:
+        conn.close()
 
     progress = [
         {
@@ -362,7 +385,7 @@ def memory_card_progress_history(patient_id):
             "time_taken": s["time_taken"],
             "mistakes": s["mistakes"],
             "difficulty": s["difficulty"],
-            "completed_at": s["completed_at"],
+            "completed_at": s["completed_at"].isoformat() if s["completed_at"] else None,
         }
         for i, s in enumerate(sessions, start=1)
     ]
@@ -389,76 +412,92 @@ def phrase_recall_complete():
         return jsonify({"error": "Invalid difficulty"}), 400
 
     conn = get_db()
-    conn.execute(
-        """INSERT INTO phrase_recall_sessions
-           (patient_id, game_name, difficulty, phrase, user_answer, correct, score)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (
-            data["patient_id"],
-            "Recall Game",
-            data["difficulty"],
-            data["phrase"],
-            data["user_answer"],
-            1 if data["correct"] else 0,
-            data["score"],
-        ),
-    )
-    conn.commit()
-    conn.close()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO phrase_recall_sessions
+                   (patient_id, game_name, difficulty, phrase, user_answer, correct, score)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (
+                    data["patient_id"],
+                    "Recall Game",
+                    data["difficulty"],
+                    data["phrase"],
+                    data["user_answer"],
+                    1 if data["correct"] else 0,
+                    data["score"],
+                ),
+            )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({"message": "Game result saved successfully"}), 200
 
 
 # ===========================================================================
-# CARETAKER API  (backend-only — no HTML entry point yet)
+# CARETAKER API
 # ===========================================================================
 
 @app.route("/api/caretaker/patients", methods=["GET"])
 def caretaker_list_patients():
     conn = get_db()
-    rows = conn.execute("SELECT id, name, age, preferred_language FROM patients").fetchall()
-    conn.close()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, name, age, preferred_language FROM patients")
+            rows = cur.fetchall()
+    finally:
+        conn.close()
     return jsonify({"patients": [dict(r) for r in rows]}), 200
 
 
 @app.route("/api/caretaker/patients/<int:patient_id>/summary", methods=["GET"])
 def caretaker_patient_summary(patient_id):
     conn = get_db()
-    patient = conn.execute(
-        "SELECT id, name, age, preferred_language FROM patients WHERE id = ?", (patient_id,)
-    ).fetchone()
-    if not patient:
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, name, age, preferred_language FROM patients WHERE id = %s",
+                (patient_id,),
+            )
+            patient = cur.fetchone()
+            if not patient:
+                return jsonify({"error": "Patient not found"}), 404
+
+            # Memory card stats
+            cur.execute(
+                """SELECT COUNT(*) AS total_games,
+                          AVG(accuracy) AS avg_accuracy,
+                          MAX(score) AS best_score
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1""",
+                (patient_id,),
+            )
+            mc_stats = cur.fetchone()
+
+            # Phrase recall stats
+            cur.execute(
+                """SELECT COUNT(*) AS total_rounds,
+                          SUM(CASE WHEN correct = 1 THEN 1 ELSE 0 END) AS correct_rounds,
+                          SUM(score) AS total_score
+                   FROM phrase_recall_sessions
+                   WHERE patient_id = %s""",
+                (patient_id,),
+            )
+            pr_stats = cur.fetchone()
+    finally:
         conn.close()
-        return jsonify({"error": "Patient not found"}), 404
-
-    # Memory card stats
-    mc_stats = conn.execute(
-        """SELECT COUNT(*) AS total_games, AVG(accuracy) AS avg_accuracy, MAX(score) AS best_score
-           FROM memory_card_sessions WHERE patient_id = ? AND completed = 1""",
-        (patient_id,),
-    ).fetchone()
-
-    # Phrase recall stats
-    pr_stats = conn.execute(
-        """SELECT COUNT(*) AS total_rounds,
-                  SUM(CASE WHEN correct = 1 THEN 1 ELSE 0 END) AS correct_rounds,
-                  SUM(score) AS total_score
-           FROM phrase_recall_sessions WHERE patient_id = ?""",
-        (patient_id,),
-    ).fetchone()
-
-    conn.close()
 
     return jsonify({
         "patient": dict(patient),
         "memory_card": {
             "total_games": mc_stats["total_games"],
-            "avg_accuracy": round(mc_stats["avg_accuracy"] or 0, 2),
-            "best_score": round(mc_stats["best_score"] or 0, 2),
+            "avg_accuracy": round(float(mc_stats["avg_accuracy"] or 0), 2),
+            "best_score": round(float(mc_stats["best_score"] or 0), 2),
         },
         "phrase_recall": {
             "total_rounds": pr_stats["total_rounds"],
-            "correct_rounds": pr_stats["correct_rounds"],
+            "correct_rounds": pr_stats["correct_rounds"] or 0,
             "total_score": pr_stats["total_score"] or 0,
         },
     }), 200
@@ -467,28 +506,33 @@ def caretaker_patient_summary(patient_id):
 @app.route("/api/caretaker/patients/<int:patient_id>/game-history", methods=["GET"])
 def caretaker_game_history(patient_id):
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
+
+            cur.execute(
+                """SELECT id, 'memory_card' AS game, difficulty, score, accuracy,
+                          time_taken, mistakes, completed_at AS played_at
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1
+                   ORDER BY id DESC LIMIT 20""",
+                (patient_id,),
+            )
+            mc_sessions = cur.fetchall()
+
+            cur.execute(
+                """SELECT id, 'phrase_recall' AS game, difficulty, score,
+                          correct, phrase, user_answer, played_at
+                   FROM phrase_recall_sessions
+                   WHERE patient_id = %s
+                   ORDER BY id DESC LIMIT 20""",
+                (patient_id,),
+            )
+            pr_sessions = cur.fetchall()
+    finally:
         conn.close()
-        return jsonify({"error": "Patient not found"}), 404
-
-    mc_sessions = conn.execute(
-        """SELECT id, 'memory_card' AS game, difficulty, score, accuracy,
-                  time_taken, mistakes, completed_at AS played_at
-           FROM memory_card_sessions WHERE patient_id = ? AND completed = 1
-           ORDER BY id DESC LIMIT 20""",
-        (patient_id,),
-    ).fetchall()
-
-    pr_sessions = conn.execute(
-        """SELECT id, 'phrase_recall' AS game, difficulty, score,
-                  correct, phrase, user_answer, played_at
-           FROM phrase_recall_sessions WHERE patient_id = ?
-           ORDER BY id DESC LIMIT 20""",
-        (patient_id,),
-    ).fetchall()
-
-    conn.close()
 
     return jsonify({
         "patient_id": patient_id,
@@ -500,17 +544,20 @@ def caretaker_game_history(patient_id):
 @app.route("/api/caretaker/patients/<int:patient_id>/care-log", methods=["GET"])
 def caretaker_get_care_log(patient_id):
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
-        conn.close()
-        return jsonify({"error": "Patient not found"}), 404
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
 
-    entries = conn.execute(
-        """SELECT id, entry_text, created_at FROM care_log_entries
-           WHERE patient_id = ? ORDER BY id DESC""",
-        (patient_id,),
-    ).fetchall()
-    conn.close()
+            cur.execute(
+                """SELECT id, entry_text, created_at FROM care_log_entries
+                   WHERE patient_id = %s ORDER BY id DESC""",
+                (patient_id,),
+            )
+            entries = cur.fetchall()
+    finally:
+        conn.close()
 
     return jsonify({
         "patient_id": patient_id,
@@ -525,18 +572,20 @@ def caretaker_add_care_log(patient_id):
         return jsonify({"error": "entry_text is required"}), 400
 
     conn = get_db()
-    patient = conn.execute("SELECT id FROM patients WHERE id = ?", (patient_id,)).fetchone()
-    if not patient:
-        conn.close()
-        return jsonify({"error": "Patient not found"}), 404
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
 
-    cursor = conn.execute(
-        "INSERT INTO care_log_entries (patient_id, entry_text) VALUES (?, ?)",
-        (patient_id, data["entry_text"]),
-    )
-    conn.commit()
-    entry_id = cursor.lastrowid
-    conn.close()
+            cur.execute(
+                "INSERT INTO care_log_entries (patient_id, entry_text) VALUES (%s, %s) RETURNING id",
+                (patient_id, data["entry_text"]),
+            )
+            entry_id = cur.fetchone()["id"]
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({"message": "Care log entry added", "entry_id": entry_id}), 201
 

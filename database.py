@@ -1,22 +1,43 @@
-import sqlite3
-import os
+"""
+NeuroBloom — PostgreSQL database helper.
+Reads connection credentials from .env via python-dotenv.
+"""
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, "neurobloom.db")
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+# Load .env from the same directory as this file
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 
 def get_db():
-    """Return a new database connection with row factory set."""
-    connection = sqlite3.connect(DATABASE)
-    connection.row_factory = sqlite3.Row
-    return connection
+    """Return a new PostgreSQL connection. Rows are accessible as dicts."""
+    conn = psycopg2.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", "5432")),
+        dbname=os.getenv("DB_NAME", "neurobloom"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASSWORD", ""),
+        cursor_factory=RealDictCursor,
+    )
+    return conn
 
 
 def init_db():
-    """Initialise the database by executing schema.sql."""
-    connection = get_db()
-    schema_path = os.path.join(BASE_DIR, "schema.sql")
+    """
+    Initialise the database by running schema.sql.
+    Safe to call on every startup — all statements use IF NOT EXISTS.
+    """
+    schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
     with open(schema_path, "r") as f:
-        connection.executescript(f.read())
-    connection.commit()
-    connection.close()
+        sql = f.read()
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+    finally:
+        conn.close()
