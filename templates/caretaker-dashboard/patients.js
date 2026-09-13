@@ -22,11 +22,11 @@ const NB_PATIENTS = [
       logic:  { meta: '3 of 5 correct · Yesterday' }
     },
     schedule: [
-      { icon: '💊', time: '8:00 AM', desc: 'Take Medicine' },
-      { icon: '🍲', time: '9:00 AM', desc: 'Breakfast' },
-      { icon: '🚶', time: '10:00 AM', desc: 'Walk in Garden' },
-      { icon: '🍛', time: '1:00 PM', desc: 'Lunch' },
-      { icon: '💊', time: '8:00 PM', desc: 'Take Medicine' }
+      { icon: 'pill', time: '8:00 AM', desc: 'Take Medicine' },
+      { icon: 'meal', time: '9:00 AM', desc: 'Breakfast' },
+      { icon: 'walk', time: '10:00 AM', desc: 'Walk in Garden' },
+      { icon: 'meal', time: '1:00 PM', desc: 'Lunch' },
+      { icon: 'pill', time: '8:00 PM', desc: 'Take Medicine' }
     ]
   },
   {
@@ -52,10 +52,10 @@ const NB_PATIENTS = [
       logic:  { meta: '2 of 5 correct · Today' }
     },
     schedule: [
-      { icon: '💊', time: '8:00 AM', desc: 'Take Medicine' },
-      { icon: '🍲', time: '9:00 AM', desc: 'Breakfast' },
-      { icon: '🎵', time: '11:00 AM', desc: 'Music Memory Session' },
-      { icon: '🍛', time: '1:00 PM', desc: 'Lunch' }
+      { icon: 'pill', time: '8:00 AM', desc: 'Take Medicine' },
+      { icon: 'meal', time: '9:00 AM', desc: 'Breakfast' },
+      { icon: 'music', time: '11:00 AM', desc: 'Music Memory Session' },
+      { icon: 'meal', time: '1:00 PM', desc: 'Lunch' }
     ]
   },
   {
@@ -81,11 +81,11 @@ const NB_PATIENTS = [
       logic:  { meta: '5 of 5 correct · Today' }
     },
     schedule: [
-      { icon: '💊', time: '7:30 AM', desc: 'Take Medicine' },
-      { icon: '🍲', time: '8:30 AM', desc: 'Breakfast' },
-      { icon: '🧩', time: '10:30 AM', desc: 'Puzzle Session' },
-      { icon: '🍛', time: '1:00 PM', desc: 'Lunch' },
-      { icon: '🚶', time: '5:00 PM', desc: 'Evening Walk' }
+      { icon: 'pill', time: '7:30 AM', desc: 'Take Medicine' },
+      { icon: 'meal', time: '8:30 AM', desc: 'Breakfast' },
+      { icon: 'puzzle', time: '10:30 AM', desc: 'Puzzle Session' },
+      { icon: 'meal', time: '1:00 PM', desc: 'Lunch' },
+      { icon: 'walk', time: '5:00 PM', desc: 'Evening Walk' }
     ]
   }
 ];
@@ -93,6 +93,7 @@ const NB_PATIENTS = [
 const NB_ACTIVE_KEY = 'nb_active_patient_id';
 const NB_CARELOG_KEY_PREFIX = 'nb_care_log_';
 const NB_TRAINING_KEY_PREFIX = 'nb_training_profiles_';
+const NB_SCHEDULE_KEY_PREFIX = 'nb_schedule_';
 
 // Seeded training profiles so the section doesn't look empty on
 // first load. New caretaker-added profiles are saved to
@@ -174,4 +175,71 @@ function nbAddTrainingProfile(id, profile){
   list.push(profile);
   nbSaveTrainingProfiles(id, list);
   return list;
+}
+
+// Today's Schedule (persisted per patient so edits/deletes/adds survive a refresh)
+function nbGetSchedule(id){
+  const raw = localStorage.getItem(NB_SCHEDULE_KEY_PREFIX + id);
+  if (raw) {
+    try { return JSON.parse(raw); } catch { /* fall through to seed data */ }
+  }
+  const patient = nbGetPatient(id);
+  return patient.schedule ? [...patient.schedule] : [];
+}
+
+function nbSaveSchedule(id, list){
+  localStorage.setItem(NB_SCHEDULE_KEY_PREFIX + id, JSON.stringify(list));
+}
+
+function nbAddScheduleItem(id, item){
+  const list = nbGetSchedule(id);
+  list.push(item);
+  nbSaveSchedule(id, list);
+  return list;
+}
+
+function nbUpdateScheduleItem(id, index, item){
+  const list = nbGetSchedule(id);
+  if (list[index]) list[index] = item;
+  nbSaveSchedule(id, list);
+  return list;
+}
+
+function nbDeleteScheduleItem(id, index){
+  const list = nbGetSchedule(id);
+  list.splice(index, 1);
+  nbSaveSchedule(id, list);
+  return list;
+}
+
+// Dark Mode Management across all pages
+const NB_DARK_MODE_KEY = 'nb_dark_mode';
+
+function nbInitDarkMode() {
+  const isDark = localStorage.getItem(NB_DARK_MODE_KEY) === 'true';
+  if (document.body) {
+    document.body.classList.toggle('dark-mode', isDark);
+  }
+}
+
+function nbSetDarkMode(isDark) {
+  localStorage.setItem(NB_DARK_MODE_KEY, isDark ? 'true' : 'false');
+  if (document.body) {
+    document.body.classList.toggle('dark-mode', isDark);
+  }
+}
+
+function nbIsDarkMode() {
+  return localStorage.getItem(NB_DARK_MODE_KEY) === 'true';
+}
+
+// Immediate execution so dark mode is active on all pages without flash
+if (typeof localStorage !== 'undefined' && localStorage.getItem(NB_DARK_MODE_KEY) === 'true') {
+  if (document.body) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('dark-mode');
+    });
+  }
 }
