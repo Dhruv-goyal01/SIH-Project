@@ -169,6 +169,74 @@ button {
   gap: var(--space-lg);
 }
 
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header__memory-book-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(59, 107, 59, 0.12);
+  border: 1.5px solid rgba(59, 107, 59, 0.3);
+  color: var(--green-primary);
+  font-weight: 700;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.22s var(--ease);
+  box-shadow: 0 2px 8px rgba(59, 107, 59, 0.08);
+  position: relative;
+}
+
+.header__memory-book-btn:hover {
+  background: var(--green-primary);
+  color: #FFFFFF;
+  border-color: var(--green-primary);
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 14px rgba(59, 107, 59, 0.25);
+}
+
+.header__memory-book-btn:active {
+  transform: scale(0.97);
+}
+
+.header__memory-book-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.header__memory-book-btn:hover .header__memory-book-icon {
+  transform: rotate(-5deg) scale(1.1);
+}
+
+.header__memory-book-label {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.header__memory-book-badge {
+  background: #D4652E;
+  color: #FFFFFF;
+  font-size: 0.68rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  margin-left: 2px;
+  box-shadow: 0 1px 4px rgba(212, 101, 46, 0.4);
+}
+
 .header__user-section {
   display: flex;
   align-items: center;
@@ -2353,11 +2421,14 @@ button {
   left: 0;
   right: 0;
   z-index: 200;
-  background: #4c6b20;
-  border-top: none;
+  /* Light green color with low opacity */
+  background: rgba(220, 240, 218, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.85);
   padding: var(--space-sm) 0;
   padding-bottom: calc(var(--space-sm) + env(safe-area-inset-bottom));
-  box-shadow: 0 -4px 28px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 -4px 24px rgba(45, 90, 45, 0.12);
 }
 
 .bottom-nav__list {
@@ -2378,9 +2449,9 @@ button {
   align-items: center;
   gap: 3px;
   padding: var(--space-xs) 0;
-  color: #FFFFFF;
+  color: #2F522F;
   font-size: 0.65rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: color var(--transition-fast), opacity var(--transition-fast);
   position: relative;
   text-decoration: none;
@@ -2390,18 +2461,18 @@ button {
   width: 22px;
   height: 22px;
   transition: transform var(--transition-fast);
-  fill: #FFFFFF;
+  fill: #355E35;
 }
 
-/* Active = selected item turns grey */
+/* Active = selected item highlight */
 .bottom-nav__link.active {
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 600;
+  color: #1A3E1A;
+  font-weight: 700;
 }
 
 .bottom-nav__link.active svg {
-  fill: rgba(255, 255, 255, 0.45);
-  transform: scale(1.05);
+  fill: #1A3E1A;
+  transform: scale(1.08);
 }
 
 .bottom-nav__link.active::before {
@@ -2409,20 +2480,36 @@ button {
 }
 
 .bottom-nav__link:hover {
-  color: rgba(255, 255, 255, 0.75);
-  opacity: 0.9;
+  color: #1B451B;
+  opacity: 1;
 }
 
 /* ============================================
    CIRCULAR PUMP / BUMP AT CAMERA (Middle item)
+   White half-circle border cutout effect
    ============================================ */
 .bottom-nav__item--pump {
   position: relative;
-  margin-top: -30px;
-  /* Elevated circular pump above the navbar bar */
+  margin-top: -34px;
   z-index: 10;
   display: flex;
   justify-content: center;
+}
+
+/* Semi-circular notch in navbar background behind camera button */
+.bottom-nav__item--pump::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  width: 76px;
+  height: 42px;
+  background: var(--bg-body, #FAF6F0);
+  border-radius: 0 0 42px 42px;
+  border-bottom: 3px solid #FFFFFF;
+  border-left: 3px solid #FFFFFF;
+  border-right: 3px solid #FFFFFF;
+  z-index: -1;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .bottom-nav__pump-btn {
@@ -2439,19 +2526,19 @@ button {
 }
 
 .bottom-nav__pump-disc {
-  width: 62px;
-  height: 62px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-circle);
-  /* Camera disc matches slightly darker version of navbar */
-  background: linear-gradient(145deg, #4c6b20 0%, #3a5218 100%);
+  background: linear-gradient(145deg, #447744 0%, #2D582D 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  /* White outline ring: inner ring matches navbar bg, outer is white */
+  /* Crisp white half-circle border cutout ring around the camera button */
   box-shadow:
-    0 0 0 5px #4c6b20,
-    0 0 0 8px rgba(255, 255, 255, 0.90);
+    0 0 0 4.5px #FFFFFF,
+    0 0 0 7.5px rgba(220, 240, 218, 0.8),
+    0 8px 18px rgba(45, 90, 45, 0.28);
   color: var(--text-white);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
@@ -2466,36 +2553,38 @@ button {
 .bottom-nav__label--pump {
   margin-top: 5px;
   font-size: 0.72rem;
-  font-weight: 600;
-  color: #FFFFFF;
+  font-weight: 700;
+  color: #2D582D;
   letter-spacing: 0.01em;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 /* Camera pump hover */
 .bottom-nav__pump-btn:hover .bottom-nav__pump-disc {
-  transform: scale(1.07) translateY(-3px);
+  transform: scale(1.08) translateY(-3px);
   box-shadow:
-    0 0 0 5px #4c6b20,
-    0 0 0 8px rgba(255, 255, 255, 0.90);
+    0 0 0 4.5px #FFFFFF,
+    0 0 0 8.5px rgba(220, 240, 218, 0.95),
+    0 10px 22px rgba(45, 90, 45, 0.35);
 }
 
 .bottom-nav__pump-btn:hover .bottom-nav__label--pump {
-  color: rgba(255, 255, 255, 0.85);
+  color: #1A3E1A;
 }
 
-/* Camera pump active — grey out like other items */
+/* Camera pump active */
 .bottom-nav__pump-btn.active .bottom-nav__pump-disc {
-  background: linear-gradient(145deg, #5a6a42 0%, #454f32 100%);
+  background: linear-gradient(145deg, #376337 0%, #244624 100%);
   box-shadow:
-    0 0 0 5px #4c6b20,
-    0 0 0 8px rgba(255, 255, 255, 0.45);
-  opacity: 0.7;
+    0 0 0 4.5px #FFFFFF,
+    0 0 0 7.5px rgba(220, 240, 218, 0.7),
+    0 4px 10px rgba(45, 90, 45, 0.25);
+  transform: scale(0.96);
 }
 
 .bottom-nav__pump-btn.active .bottom-nav__label--pump {
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 600;
+  color: #1A3E1A;
+  font-weight: 800;
 }
 
 
@@ -2549,6 +2638,14 @@ button {
     grid-row: 5;
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .header__memory-book-label {
+    display: none;
+  }
+
+  .header__memory-book-btn {
+    padding: 8px 10px;
   }
 }
 
@@ -2797,22 +2894,23 @@ button {
 .memory-book-panel {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  width: 100%;
+  max-width: 580px;
   z-index: 301;
   background: #FFFFFF;
   border-radius: 24px 24px 0 0;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  transform: translateY(100%);
   transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.22);
   overflow: hidden;
 }
 
 .memory-book-panel.is-open {
-  transform: translateY(0);
+  transform: translate(-50%, 0);
 }
 
 /* Drag handle */
@@ -3278,6 +3376,172 @@ button {
   transform: scale(1.06);
 }
 
+/* Undo bar */
+.mb-undo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #2D3A20;
+  color: #FFFFFF;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  animation: mbFadeIn 0.2s ease both;
+}
+
+.mb-undo-btn {
+  background: #A2D870;
+  color: #1A2810;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mb-undo-btn:hover {
+  background: #C4F096;
+}
+
+/* Filter chips */
+.mb-filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.mb-filter-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid #E0E8D8;
+  background: #F8FAF6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #556B40;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mb-filter-chip.active {
+  background: #4C6B20;
+  color: #FFFFFF;
+  border-color: #4C6B20;
+  box-shadow: 0 2px 6px rgba(76, 107, 32, 0.25);
+}
+
+.mb-filter-chip--good.active {
+  background: #3B7A48;
+  border-color: #3B7A48;
+}
+
+.mb-filter-chip--bad.active {
+  background: #5A6075;
+  border-color: #5A6075;
+}
+
+/* Add Memory Card */
+.mb-memory-add-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: #FBFDF9;
+  border: 1.5px dashed #D0DECA;
+  border-radius: 14px;
+  margin-top: 8px;
+}
+
+.mb-memory-sentiment-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mb-sentiment-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #556B40;
+}
+
+.mb-sentiment-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.mb-sentiment-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid #D8E0D2;
+  background: #FFFFFF;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #667;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mb-sentiment-btn.active#btn-sentiment-good {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+  color: #2E7D32;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.2);
+}
+
+.mb-sentiment-btn.active#btn-sentiment-bad {
+  background: #ECEFF1;
+  border-color: #78909C;
+  color: #37474F;
+  box-shadow: 0 2px 6px rgba(120, 144, 156, 0.2);
+}
+
+.mb-memory-item--good {
+  background: linear-gradient(135deg, #F5FAF4 0%, #FFFFFF 100%);
+  border-color: #C8E6C9;
+}
+
+.mb-memory-item--good:hover {
+  border-color: #81C784;
+  box-shadow: 0 3px 12px rgba(76, 175, 80, 0.12);
+}
+
+.mb-memory-item--bad {
+  background: linear-gradient(135deg, #F4F5F8 0%, #FFFFFF 100%);
+  border-color: #D6D9E0;
+}
+
+.mb-memory-item--bad:hover {
+  border-color: #90A4AE;
+  box-shadow: 0 3px 12px rgba(96, 125, 139, 0.12);
+}
+
+.mb-memory-type-tag {
+  display: inline-block;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.mb-memory-type-tag.good {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.mb-memory-type-tag.bad {
+  background: #ECEFF1;
+  color: #455A64;
+}
+
 /* Empty state */
 .mb-empty-state {
   display: flex;
@@ -3348,16 +3612,27 @@ button {
   color: #eef0ff;
 }
 
-[data-theme="dark"] .mb-memory-item {
-  background: linear-gradient(135deg, #2a2230 0%, #241e2e 100%);
-  border-color: rgba(212,133,46,0.25);
+[data-theme="dark"] .mb-memory-item--good {
+  background: linear-gradient(135deg, #1c2e22 0%, #17241c 100%);
+  border-color: rgba(76,175,80,0.3);
+}
+
+[data-theme="dark"] .mb-memory-item--bad {
+  background: linear-gradient(135deg, #242836 0%, #1c202d 100%);
+  border-color: rgba(120,144,156,0.3);
 }
 
 [data-theme="dark"] .mb-memory-text {
-  color: #e8c8a8;
+  color: #e8eaed;
 }
 
-[data-theme="dark"] .mb-emoji-pick {
-  background: #252030;
-  border-color: rgba(212,133,46,0.2);
+[data-theme="dark"] .mb-memory-add-card {
+  background: #1c2032;
+  border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .header__memory-book-btn {
+  background: rgba(163, 217, 163, 0.12);
+  border-color: rgba(163, 217, 163, 0.3);
+  color: #a3d9a3;
 }
