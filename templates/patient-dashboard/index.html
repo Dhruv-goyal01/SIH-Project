@@ -33,6 +33,17 @@
           <h1 class="header__user-name" id="header-user-name">Arundhati</h1>
         </div>
       </div>
+
+      <!-- Top Right Header Actions: Memory Book -->
+      <div class="header__actions">
+        <button class="header__memory-book-btn" id="btn-open-memory-book" aria-label="Open Memory Book" title="Memory Book">
+          <svg class="header__memory-book-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18 2H6c-1.2 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm12 16H6v-2h12v2zm0-4H6V6h12v10z"/>
+          </svg>
+          <span class="header__memory-book-label">Memory Book</span>
+          <span class="header__memory-book-badge" id="memory-book-badge">3</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -630,6 +641,102 @@
     <span class="nav-toast__message" data-i18n="toast.camera">Camera activated: Memory scanner ready</span>
   </div>
 
+  <!-- ===== MEMORY BOOK MODAL (Todo List & Good/Bad Memories) ===== -->
+  <div class="memory-book-overlay" id="memory-book-overlay" aria-hidden="true"></div>
+  <aside class="memory-book-panel" id="memory-book-panel" aria-label="Memory Book" aria-hidden="true">
+    <div class="memory-book-panel__handle"></div>
+    <div class="memory-book-panel__header">
+      <div class="memory-book-panel__title">
+        <div class="memory-book-panel__title-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18 2H6c-1.2 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm12 16H6v-2h12v2zm0-4H6V6h12v10z"/>
+          </svg>
+        </div>
+        <span>Memory Book</span>
+      </div>
+      <button class="memory-book-panel__close" id="btn-close-memory-book" aria-label="Close Memory Book">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Tabs inside Memory Book -->
+    <div class="memory-book-tabs">
+      <button class="mb-tab-btn active" id="mb-tab-todo" data-target="todo">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+        </svg>
+        <span>To-Do List</span>
+      </button>
+      <button class="mb-tab-btn" id="mb-tab-memories" data-target="memories">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span>Memories</span>
+      </button>
+    </div>
+
+    <!-- Scrollable Panel Body -->
+    <div class="memory-book-panel__body">
+      <!-- TAB 1: TO-DO LIST -->
+      <section class="mb-tab-content active" id="mb-content-todo">
+        <div class="mb-section-label">Important Tasks to Do</div>
+        <div class="mb-todo-list" id="mb-todo-list">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Add Todo Item Input -->
+        <div class="mb-add-row">
+          <input type="text" class="mb-add-input" id="mb-todo-input" placeholder="Add an important task (e.g., Take morning medicine)..." maxlength="80">
+          <button class="mb-add-btn" id="mb-todo-add-btn" aria-label="Add task" title="Add task">+</button>
+        </div>
+
+        <!-- Recycle / Undo Banner -->
+        <div class="mb-undo-bar" id="mb-undo-bar" style="display:none;">
+          <span class="mb-undo-text" id="mb-undo-text">Task removed</span>
+          <button class="mb-undo-btn" id="mb-undo-btn">Undo</button>
+        </div>
+      </section>
+
+      <!-- TAB 2: MEMORIES (GOOD & BAD) -->
+      <section class="mb-tab-content" id="mb-content-memories">
+        <div class="mb-section-label">Cherished & Notable Memories</div>
+
+        <!-- Memory Filter Chips -->
+        <div class="mb-filter-row">
+          <button class="mb-filter-chip active" data-filter="all">All</button>
+          <button class="mb-filter-chip mb-filter-chip--good" data-filter="good">🌟 Good Memories</button>
+          <button class="mb-filter-chip mb-filter-chip--bad" data-filter="bad">🌧️ Hard / Bad Memories</button>
+        </div>
+
+        <div class="mb-memory-list" id="mb-memory-list">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Add Memory Form -->
+        <div class="mb-memory-add-card">
+          <div class="mb-memory-sentiment-toggle">
+            <span class="mb-sentiment-label">Memory Type:</span>
+            <div class="mb-sentiment-pills">
+              <button type="button" class="mb-sentiment-btn active" id="btn-sentiment-good" data-type="good">
+                <span>🌟 Good Memory</span>
+              </button>
+              <button type="button" class="mb-sentiment-btn" id="btn-sentiment-bad" data-type="bad">
+                <span>🌧️ Difficult Memory</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-memory-input-row">
+            <input type="text" class="mb-memory-input" id="mb-memory-input" placeholder="Record a memory or feeling..." maxlength="140">
+            <button class="mb-memory-add-btn" id="mb-memory-add-btn" aria-label="Save memory" title="Save memory">+</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </aside>
+
   <!-- ===== BOTTOM NAVIGATION (Mobile) =====
   <nav class="bottom-nav" id="bottom-nav" aria-label="Mobile navigation">
     <ul class="bottom-nav__list">
@@ -1128,6 +1235,355 @@
 
     // Auto-refresh every 5 seconds so new messages from the caretaker appear automatically without manual reload
     setInterval(loadPatientNotes, 5000);
+
+    // =========================================================================
+    // MEMORY BOOK (TODO LIST & GOOD / BAD MEMORIES)
+    // =========================================================================
+    (function initMemoryBook() {
+      const btnOpenMemoryBook = document.getElementById('btn-open-memory-book');
+      const mbPanel = document.getElementById('memory-book-panel');
+      const mbOverlay = document.getElementById('memory-book-overlay');
+      const btnCloseMemoryBook = document.getElementById('btn-close-memory-book');
+      const memoryBookBadge = document.getElementById('memory-book-badge');
+
+      // Tabs
+      const tabTodoBtn = document.getElementById('mb-tab-todo');
+      const tabMemoriesBtn = document.getElementById('mb-tab-memories');
+      const contentTodo = document.getElementById('mb-content-todo');
+      const contentMemories = document.getElementById('mb-content-memories');
+
+      // Todo Elements
+      const todoListEl = document.getElementById('mb-todo-list');
+      const todoInput = document.getElementById('mb-todo-input');
+      const todoAddBtn = document.getElementById('mb-todo-add-btn');
+      const undoBar = document.getElementById('mb-undo-bar');
+      const undoText = document.getElementById('mb-undo-text');
+      const undoBtn = document.getElementById('mb-undo-btn');
+
+      // Memory Elements
+      const memoryListEl = document.getElementById('mb-memory-list');
+      const memoryInput = document.getElementById('mb-memory-input');
+      const memoryAddBtn = document.getElementById('mb-memory-add-btn');
+      const btnSentimentGood = document.getElementById('btn-sentiment-good');
+      const btnSentimentBad = document.getElementById('btn-sentiment-bad');
+      const filterChips = document.querySelectorAll('.mb-filter-chip');
+
+      let currentSentiment = 'good'; // 'good' | 'bad'
+      let currentFilter = 'all';     // 'all' | 'good' | 'bad'
+      let lastRemovedItem = null;    // for undo/unremove
+      let undoTimer = null;
+
+      // Default Starter Data
+      const defaultTodos = [
+        { id: 1, text: 'Take morning heart & memory medicine with warm water', done: false, important: true },
+        { id: 2, text: 'Gentle 15-minute garden walk with my walking stick', done: false, important: true },
+        { id: 3, text: 'Call daughter Rupa after lunch', done: true, important: false },
+        { id: 4, text: 'Brain workout: Complete Daily Memory Cards Game', done: false, important: true }
+      ];
+
+      const defaultMemories = [
+        { id: 1, text: 'Walking in the garden in Guwahati during tea harvest with family — feeling peaceful', type: 'good', date: 'Yesterday, 4:30 PM' },
+        { id: 2, text: 'Felt confused looking for my reading glasses in the hall, had brief panic', type: 'bad', date: '3 days ago' },
+        { id: 3, text: 'Granddaughter Priya shared her drawing of sunflowers over a video call', type: 'good', date: 'Last Sunday' }
+      ];
+
+      // LocalStorage Load / Save
+      function loadTodos() {
+        const stored = localStorage.getItem('nb_memory_book_todos');
+        if (stored) {
+          try { return JSON.parse(stored); } catch(e){}
+        }
+        return defaultTodos;
+      }
+
+      function saveTodos(todos) {
+        localStorage.setItem('nb_memory_book_todos', JSON.stringify(todos));
+        updateBadge(todos);
+      }
+
+      function loadMemories() {
+        const stored = localStorage.getItem('nb_memory_book_memories');
+        if (stored) {
+          try { return JSON.parse(stored); } catch(e){}
+        }
+        return defaultMemories;
+      }
+
+      function saveMemories(mems) {
+        localStorage.setItem('nb_memory_book_memories', JSON.stringify(mems));
+      }
+
+      function updateBadge(todos) {
+        if (!memoryBookBadge) return;
+        const pendingCount = todos.filter(t => !t.done).length;
+        memoryBookBadge.textContent = pendingCount;
+        memoryBookBadge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
+      }
+
+      // Open / Close Panel
+      function openMemoryBook() {
+        if (!mbPanel || !mbOverlay) return;
+        mbPanel.classList.add('is-open');
+        mbOverlay.classList.add('is-visible');
+        mbPanel.setAttribute('aria-hidden', 'false');
+        mbOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeMemoryBook() {
+        if (!mbPanel || !mbOverlay) return;
+        mbPanel.classList.remove('is-open');
+        mbOverlay.classList.remove('is-visible');
+        mbPanel.setAttribute('aria-hidden', 'true');
+        mbOverlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      btnOpenMemoryBook?.addEventListener('click', openMemoryBook);
+      btnCloseMemoryBook?.addEventListener('click', closeMemoryBook);
+      mbOverlay?.addEventListener('click', closeMemoryBook);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && mbPanel?.classList.contains('is-open')) {
+          closeMemoryBook();
+        }
+      });
+
+      // Tab Switching
+      tabTodoBtn?.addEventListener('click', () => {
+        tabTodoBtn.classList.add('active');
+        tabMemoriesBtn.classList.remove('active');
+        contentTodo.classList.add('active');
+        contentMemories.classList.remove('active');
+      });
+
+      tabMemoriesBtn?.addEventListener('click', () => {
+        tabMemoriesBtn.classList.add('active');
+        tabTodoBtn.classList.remove('active');
+        contentMemories.classList.add('active');
+        contentTodo.classList.remove('active');
+      });
+
+      // -----------------------------------------------------------------------
+      // TODO LIST LOGIC (Add, Toggle Tick/Untick, Remove, Unremove/Undo)
+      // -----------------------------------------------------------------------
+      let currentTodos = loadTodos();
+      updateBadge(currentTodos);
+
+      function renderTodos() {
+        if (!todoListEl) return;
+        todoListEl.innerHTML = '';
+
+        if (currentTodos.length === 0) {
+          todoListEl.innerHTML = `
+            <div class="mb-empty-state">
+              <span class="mb-empty-state-icon">📋</span>
+              <span>No tasks right now! Add something important to remember above.</span>
+            </div>
+          `;
+          return;
+        }
+
+        currentTodos.forEach((item, index) => {
+          const itemEl = document.createElement('div');
+          itemEl.className = `mb-todo-item ${item.done ? 'done' : ''}`;
+          itemEl.setAttribute('data-id', item.id);
+
+          itemEl.innerHTML = `
+            <button class="mb-todo-check" aria-label="${item.done ? 'Untick task' : 'Tick task'}" title="${item.done ? 'Mark as not done' : 'Mark as completed'}">
+              <svg viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+            </button>
+            <span class="mb-todo-text">${item.text}</span>
+            <button class="mb-todo-delete" aria-label="Remove task" title="Remove task">
+              <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          `;
+
+          // Toggle tick/untick
+          const checkBtn = itemEl.querySelector('.mb-todo-check');
+          const textEl = itemEl.querySelector('.mb-todo-text');
+
+          const toggleDone = () => {
+            item.done = !item.done;
+            saveTodos(currentTodos);
+            renderTodos();
+          };
+
+          checkBtn.addEventListener('click', toggleDone);
+          textEl.addEventListener('click', toggleDone);
+
+          // Remove item with undo / unremove option
+          const deleteBtn = itemEl.querySelector('.mb-todo-delete');
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lastRemovedItem = { item: { ...item }, index };
+            currentTodos.splice(index, 1);
+            saveTodos(currentTodos);
+            renderTodos();
+            showUndo(`"${item.text.slice(0, 24)}..." removed`);
+          });
+
+          todoListEl.appendChild(itemEl);
+        });
+      }
+
+      function showUndo(msg) {
+        if (!undoBar || !undoText) return;
+        undoText.textContent = msg;
+        undoBar.style.display = 'flex';
+        clearTimeout(undoTimer);
+        undoTimer = setTimeout(() => {
+          undoBar.style.display = 'none';
+          lastRemovedItem = null;
+        }, 5000);
+      }
+
+      // Unremove / Undo Click
+      undoBtn?.addEventListener('click', () => {
+        if (lastRemovedItem) {
+          currentTodos.splice(lastRemovedItem.index, 0, lastRemovedItem.item);
+          saveTodos(currentTodos);
+          renderTodos();
+          lastRemovedItem = null;
+          if (undoBar) undoBar.style.display = 'none';
+          clearTimeout(undoTimer);
+        }
+      });
+
+      // Add new task
+      function addTodo() {
+        const text = todoInput?.value.trim();
+        if (!text) return;
+        const newItem = {
+          id: Date.now(),
+          text: text,
+          done: false,
+          important: true
+        };
+        currentTodos.unshift(newItem);
+        saveTodos(currentTodos);
+        renderTodos();
+        if (todoInput) todoInput.value = '';
+      }
+
+      todoAddBtn?.addEventListener('click', addTodo);
+      todoInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addTodo();
+      });
+
+      renderTodos();
+
+      // -----------------------------------------------------------------------
+      // MEMORIES LOGIC (Good / Bad Memories, Filter, Add, Delete)
+      // -----------------------------------------------------------------------
+      let currentMemories = loadMemories();
+
+      // Sentiment toggle buttons
+      btnSentimentGood?.addEventListener('click', () => {
+        currentSentiment = 'good';
+        btnSentimentGood.classList.add('active');
+        btnSentimentBad.classList.remove('active');
+      });
+
+      btnSentimentBad?.addEventListener('click', () => {
+        currentSentiment = 'bad';
+        btnSentimentBad.classList.add('active');
+        btnSentimentGood.classList.remove('active');
+      });
+
+      // Filter chips
+      filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          filterChips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          currentFilter = chip.getAttribute('data-filter');
+          renderMemories();
+        });
+      });
+
+      function renderMemories() {
+        if (!memoryListEl) return;
+        memoryListEl.innerHTML = '';
+
+        const filtered = currentMemories.filter(m => {
+          if (currentFilter === 'all') return true;
+          return m.type === currentFilter;
+        });
+
+        if (filtered.length === 0) {
+          const emptyText = currentFilter === 'all'
+            ? 'No memories recorded yet. Record a good or difficult moment below!'
+            : `No ${currentFilter} memories recorded yet.`;
+          memoryListEl.innerHTML = `
+            <div class="mb-empty-state">
+              <span class="mb-empty-state-icon">${currentFilter === 'bad' ? '🌧️' : '🌟'}</span>
+              <span>${emptyText}</span>
+            </div>
+          `;
+          return;
+        }
+
+        filtered.forEach(item => {
+          const itemEl = document.createElement('div');
+          const isGood = (item.type === 'good');
+          itemEl.className = `mb-memory-item ${isGood ? 'mb-memory-item--good' : 'mb-memory-item--bad'}`;
+          itemEl.setAttribute('data-id', item.id);
+
+          itemEl.innerHTML = `
+            <div class="mb-memory-emoji" aria-hidden="true">${isGood ? '🌟' : '🌧️'}</div>
+            <div class="mb-memory-body">
+              <div class="mb-memory-type-tag ${isGood ? 'good' : 'bad'}">
+                ${isGood ? 'Good Memory' : 'Difficult Memory'}
+              </div>
+              <div class="mb-memory-text">${item.text}</div>
+              <div class="mb-memory-date">${item.date || 'Recently recorded'}</div>
+            </div>
+            <button class="mb-memory-delete" aria-label="Delete memory" title="Delete memory">
+              <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          `;
+
+          // Delete memory
+          const deleteBtn = itemEl.querySelector('.mb-memory-delete');
+          deleteBtn.addEventListener('click', () => {
+            currentMemories = currentMemories.filter(m => m.id !== item.id);
+            saveMemories(currentMemories);
+            renderMemories();
+          });
+
+          memoryListEl.appendChild(itemEl);
+        });
+      }
+
+      // Add Memory
+      function addMemory() {
+        const text = memoryInput?.value.trim();
+        if (!text) return;
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = `Today, ${timeStr}`;
+
+        const newMem = {
+          id: Date.now(),
+          text: text,
+          type: currentSentiment,
+          date: dateStr
+        };
+
+        currentMemories.unshift(newMem);
+        saveMemories(currentMemories);
+        renderMemories();
+        if (memoryInput) memoryInput.value = '';
+      }
+
+      memoryAddBtn?.addEventListener('click', addMemory);
+      memoryInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addMemory();
+      });
+
+      renderMemories();
+    })();
   </script>
 
 </body>
