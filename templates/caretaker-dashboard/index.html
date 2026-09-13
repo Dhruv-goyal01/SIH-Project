@@ -66,27 +66,24 @@
                             </label>
                         </div>
                         <div class="settings-divider"></div>
-                        <div class="settings-label" style="margin-bottom:10px;">Default Text Size</div>
-                        <div class="settings-textsize" id="settingsTextSize">
-                            <button data-size="small">A</button>
-                            <button data-size="medium" class="active">A</button>
-                            <button data-size="large">A</button>
+                        <div class="lang-btns">
+                            <div class="lang-btn active">
+                                <div class="top">English</div>
+                                <div class="bottom">English</div>
+                            </div>
+                            <div class="lang-btn ">
+                                <div class="top">অসমীয়া</div>
+                                <div class="bottom">Assamese</div>
+                            </div>
+                            <div class="lang-btn">
+                                <div class="top">বাংলা</div>
+                                <div class="bottom">Manipuri</div>
+                            </div>
+                            <div class="lang-btn">
+                                <div class="top">Mizo</div>
+                                <div class="bottom">Mizo</div>
+                            </div>
                         </div>
-                        <div class="settings-divider"></div>
-                        <div class="settings-label" style="margin-bottom:10px;">Active Location</div>
-                        <select id="locationSelect" class="settings-select"></select>
-
-                        <div class="location-chip-list" id="locationManageList"></div>
-
-                        <div class="location-add-row">
-                            <input type="text" id="newLocationInput" class="location-add-input"
-                                placeholder="Add a location…">
-                            <button type="button" id="addLocationBtn" class="location-add-btn">Add</button>
-                        </div>
-
-                        <button type="button" id="useLiveLocationBtn" class="live-location-btn">📍 Use My Live
-                            Location</button>
-                        <div class="location-status" id="locationStatus"></div>
                     </div>
                 </div>
             </div>
@@ -94,44 +91,9 @@
 
         <div class="care-logs-tip">🗒 Care Logs</div>
 
-        <!-- Greeting banner -->
-        <div class="banner">
-            <img class="banner-photo" id="bannerPhoto" src="" alt="">
-            <div class="banner-photo photo-placeholder" id="bannerPhotoFallback" style="display:none;"></div>
-            <div class="banner-body">
-                <div class="banner-date">📅 Today is Wednesday, October 16 · Assamese Year 1946</div>
-                <h1 id="greetingTitle">Good Morning!</h1>
-                <p>Daily Summary: Activity and well-being tracking is active.</p>
-            </div>
-            <div class="location-chip">
-                <div class="label">ACTIVE LOCATION <span class="live-dot" id="liveDot" style="display:none;">●
-                        LIVE</span></div>
-                <div class="value" id="locationChipValue">—</div>
-            </div>
-        </div>
 
         <!-- Row 1 -->
         <div class="row row-1">
-            <div class="card">
-                <h2><span class="dot"></span><span id="statusHeading">Current Status</span></h2>
-                <div class="status-person">
-                    <img id="statusPhoto" src="" alt="">
-                    <div class="status-avatar photo-placeholder" id="statusPhotoFallback" style="display:none;"></div>
-                    <div>
-                        <div class="who">Last Active</div>
-                        <div class="when" id="statusLastActive">—</div>
-                    </div>
-                    <div class="status-more">⋯</div>
-                </div>
-                <div class="status-rows">
-                    <div class="status-row"><span class="k">Mood:</span><span class="v" id="statusMood">—</span></div>
-                    <div class="status-row"><span class="k">Activity Level:</span><span class="v"
-                            id="statusActivity">—</span></div>
-                    <div class="status-row"><span class="k">Focus level:</span><span class="v" id="statusFocus">—</span>
-                    </div>
-                </div>
-                <span class="alert-pill" id="statusAlertPill">Alert</span>
-            </div>
             <div class="card">
                 <h2><span id="exerciseHeading">Exercise Progress</span></h2>
                 <div class="exercise-row">
@@ -194,43 +156,6 @@
             </div>
         </div>
 
-        <!-- footer -->
-        <div class="card controls-card">
-            <div class="control-group">
-                <div class="control-icon">文</div>
-                <div class="control-label">Translate to/from<span>Patient Language</span></div>
-            </div>
-            <div class="control-group">
-                <div class="control-icon">🎙</div>
-                <div class="control-label">Remote Voice-Assist<span>Live caregiver audio</span></div>
-            </div>
-            <div class="toggle">
-                <button id="toggleOff" class="on" onclick="setToggle(false)">OFF</button>
-                <button id="toggleOn" onclick="setToggle(true)">ON</button>
-            </div>
-            <div class="text-size-btns">
-                <button onclick="resizeText(-1)">A-</button>
-                <button onclick="resizeText(1)">A+</button>
-            </div>
-            <div class="lang-btns">
-                <div class="lang-btn active">
-                    <div class="top">অসমীয়া</div>
-                    <div class="bottom">Assamese</div>
-                </div>
-                <div class="lang-btn">
-                    <div class="top">English</div>
-                    <div class="bottom">English</div>
-                </div>
-                <div class="lang-btn">
-                    <div class="top">বাংলা</div>
-                    <div class="bottom">Manipuri</div>
-                </div>
-                <div class="lang-btn">
-                    <div class="top">Mizo</div>
-                    <div class="bottom">Mizo</div>
-                </div>
-            </div>
-        </div>
     </div>
     <script src="/caretaker/patients.js"></script>
     <script src="/caretaker/script.js"></script>
