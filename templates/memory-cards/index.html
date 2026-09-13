@@ -18,70 +18,26 @@
         </div>
     </header>
 
-    <!-- Start / Instruction Screen -->
-    <div id="startScreen" class="screen-container">
-        <h2 class="title-primary"><strong>Find the Match</strong></h2>
-        <p class="title-secondary">Memory Game 🧠</p>
+    <!-- Start screen hidden - game auto-starts with AI difficulty -->
+    <div id="startScreen" class="screen-container" style="display: none;"></div>
 
-        <!-- Preview Card Box -->
-        <div class="preview-tray">
-            <div class="mini-card">🏆</div>
-            <div class="mini-card">🌸</div>
-            <div class="mini-card">🍎</div>
-            <div class="mini-card">👖</div>
-            <div class="mini-card">☕</div>
-            <div class="mini-card">🥐</div>
-        </div>
-
-        <div class="info-dark-banner">
-            Tap matching pairs to complete the challenge!
-        </div>
-
-        <!-- Instructions Card -->
-        <div class="instructions-card">
-            <div class="step">
-                <span class="step-num">1</span>
-                <div>
-                    <strong>Look carefully</strong>
-                    <p>Cards will be face down on the tray</p>
-                </div>
-            </div>
-            <div class="step">
-                <span class="step-num">2</span>
-                <div>
-                    <strong>Tap to flip</strong>
-                    <p>Reveal two cards at a time to find identical pairs</p>
-                </div>
-            </div>
-            <div class="step">
-                <span class="step-num">3</span>
-                <div>
-                    <strong>Match them all</strong>
-                    <p>Clear the tray in as few moves as possible</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Start Button -->
-        <div class="difficulty-row">
-       <button type="button" class="start-btn diff-btn" onclick="startGame('easy')">Easy</button>
-
-       <button type="button" class="start-btn diff-btn" onclick="startGame('medium')">Medium</button>
-
-       <button type="button" class="start-btn diff-btn" onclick="startGame('hard')">Hard</button>
-    </div>
-        <p class="tagline">Keeps your mind active and sharp 🌟</p>
-    </div>
-
-    <!-- Main Game Screen (Hidden initially) -->
-    <div id="gameScreen" class="app-container" style="display: none;">
+    <!-- Main Game Screen -->
+    <div id="gameScreen" class="app-container">
         <div class="instruction-banner">
             Tap two cards to find matching pairs <span id="flip-count" class="flip-badge">| Moves: 0</span>
+            <span id="ai-difficulty-banner" style="
+                margin-left: 12px;
+                background: linear-gradient(135deg, #7c3aed, #4c1d95);
+                border-radius: 8px;
+                padding: 2px 10px;
+                font-size: 0.78em;
+                color: #e0e7ff;
+            "></span>
         </div>
         
         <main class="game-board" id="board"></main>
 
-        <button type="button" class="restart-btn" onclick="showStartScreen()">Back to Menu</button>
+        <button type="button" class="restart-btn" onclick="restartWithAI()">🤖 New Game (AI Difficulty)</button>
     </div>
 
     <!-- Victory Modal -->
@@ -90,7 +46,7 @@
             <div class="star-badge">⭐ ⭐ ⭐</div>
             <h2>Wonderful Job!</h2>
             <p>You matched all the pairs perfectly! Your memory is shining bright today.</p>
-            <button type="button" class="play-again-btn" onclick="startGame()">Play Again</button>
+            <button type="button" class="play-again-btn" onclick="restartWithAI()">Play Again (AI Difficulty)</button>
         </div>
     </div>
 

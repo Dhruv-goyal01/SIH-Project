@@ -212,37 +212,39 @@
             <span class="notification-dot" aria-label="New notification"></span>
           </div>
 
-          <!-- Doctor Note -->
-          <article class="note-item note-item--doctor" id="note-doctor">
-            <div class="note-item__header">
-              <div class="note-item__author">
-                <div class="note-item__avatar">D</div>
-                <div>
-                  <span class="note-item__name">Dr. Sharma</span>
-                  <span class="note-item__role"> (AIMS Guwahati)</span>
+          <div id="notes-list">
+            <!-- Doctor Note -->
+            <article class="note-item note-item--doctor" id="note-doctor">
+              <div class="note-item__header">
+                <div class="note-item__author">
+                  <div class="note-item__avatar">D</div>
+                  <div>
+                    <span class="note-item__name">Dr. Sharma</span>
+                    <span class="note-item__role"> (AIMS Guwahati)</span>
+                  </div>
                 </div>
+                <span class="note-item__time">10:00 AM</span>
               </div>
-              <span class="note-item__time">10:00 AM</span>
-            </div>
-            <p class="note-item__message">Wonderful focus on the Memory Match game today, Arundhati. Keep up this
-              regular morning play!</p>
-          </article>
+              <p class="note-item__message">Wonderful focus on the Memory Match game today, Arundhati. Keep up this
+                regular morning play!</p>
+            </article>
 
-          <!-- Family Note -->
-          <article class="note-item note-item--family" id="note-family">
-            <div class="note-item__header">
-              <div class="note-item__author">
-                <div class="note-item__avatar">P</div>
-                <div>
-                  <span class="note-item__name">Priya</span>
-                  <span class="note-item__role"> (Daughter)</span>
+            <!-- Family Note -->
+            <article class="note-item note-item--family" id="note-family">
+              <div class="note-item__header">
+                <div class="note-item__author">
+                  <div class="note-item__avatar">P</div>
+                  <div>
+                    <span class="note-item__name">Priya</span>
+                    <span class="note-item__role"> (Daughter)</span>
+                  </div>
                 </div>
+                <span class="note-item__time">Yesterday</span>
               </div>
-              <span class="note-item__time">Yesterday</span>
-            </div>
-            <p class="note-item__message">We love you, Ma! Keep playing these nice memory games. Riyan says hello from
-              Shillong!</p>
-          </article>
+              <p class="note-item__message">We love you, Ma! Keep playing these nice memory games. Riyan says hello from
+                Shillong!</p>
+            </article>
+          </div>
         </section>
 
       </div><!-- /dashboard-grid -->
@@ -434,18 +436,66 @@
       }, 200);
     });
 
-    // ---- Animate progress bar on load ----
-    window.addEventListener('load', () => {
-      const progressFill = document.querySelector('.progress-bar__fill');
-      if (progressFill) {
-        progressFill.style.width = '0%';
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            progressFill.style.width = '40%';
-          });
-        });
+    // ---- Dynamic Caretaker & Family Notes from PostgreSQL ----
+    async function loadPatientNotes() {
+      const notesList = document.getElementById('notes-list');
+      if (!notesList) return;
+
+      try {
+        const res = await fetch('/api/caretaker/patients/1/care-log');
+        if (!res.ok) return;
+        const data = await res.json();
+        const entries = data.entries || [];
+
+        if (entries.length === 0) return;
+
+        // Render dynamic notes followed by the doctor note
+        notesList.innerHTML = entries.map((entry, idx) => {
+          let text = entry.entry_text;
+          let timeDisplay = 'Just now';
+          let author = 'Caretaker';
+          let role = ' (Care Team)';
+          let avatar = 'C';
+          let itemClass = 'note-item--family';
+
+          // Extract time prefix if present e.g. "08:15 AM: (Caregiver log) Message"
+          const match = text.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM)?):\s*(?:\([^)]+\)\s*)?(.*)$/i);
+          if (match) {
+            timeDisplay = match[1];
+            text = match[2];
+          } else if (entry.created_at) {
+            try {
+              timeDisplay = new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {}
+          }
+
+          return `
+            <article class="note-item ${itemClass}" style="animation: fadeIn 0.4s ease;">
+              <div class="note-item__header">
+                <div class="note-item__author">
+                  <div class="note-item__avatar">${avatar}</div>
+                  <div>
+                    <span class="note-item__name">${author}</span>
+                    <span class="note-item__role">${role}</span>
+                  </div>
+                </div>
+                <span class="note-item__time">${timeDisplay}</span>
+              </div>
+              <p class="note-item__message">${text}</p>
+            </article>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.warn('Could not load dynamic patient notes:', err);
       }
-    });
+    }
+
+    // Initial load
+    loadPatientNotes();
+
+    // Auto-refresh every 5 seconds so new messages from the caretaker appear automatically without manual reload
+    setInterval(loadPatientNotes, 5000);
   </script>
 
 </body>

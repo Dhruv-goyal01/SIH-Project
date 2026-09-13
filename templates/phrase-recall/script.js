@@ -18,6 +18,8 @@ const phrases = [
     let currentDifficulty = "medium";
     let memorizeTime = 5;
     let distractorCount = 4;
+    let aiRecommendedDifficulty = 'medium'; // updated by ML API
+    const PATIENT_ID = 1;
 
     const phraseDisplay = document.getElementById("phrase-display");
     const timerElement = document.getElementById("timer");
@@ -46,6 +48,35 @@ const phrases = [
       });
     });
 
+    // ── Auto-start with AI difficulty on page load ────────────────────
+    async function fetchRecommendedDifficulty() {
+      try {
+        const res  = await fetch(`/api/phrase-recall/recommend-difficulty/${PATIENT_ID}`);
+        const data = await res.json();
+
+        if (res.ok && data.recommended_difficulty) {
+          aiRecommendedDifficulty = data.recommended_difficulty;
+          setDifficulty(data.recommended_difficulty);
+          console.log('[AI] Auto-starting at difficulty:', data.recommended_difficulty, '| Reason:', data.reason);
+        }
+      } catch (err) {
+        console.warn('[AI] Could not fetch difficulty, defaulting to medium:', err);
+        setDifficulty('medium');
+      }
+
+      // Hide start screen and immediately start the game
+      if (startScreen) startScreen.classList.remove('active');
+
+      // Show AI difficulty in header banner
+      const banner = document.getElementById('ai-difficulty-banner');
+      if (banner) banner.textContent = `🤖 ${currentDifficulty.toUpperCase()}`;
+
+      startGame();
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchRecommendedDifficulty);
+
+
     function setDifficulty(level) {
       currentDifficulty = level;
       if (level === "easy") {
@@ -69,7 +100,7 @@ const phrases = [
     modalCloseBtn.addEventListener("click", () => {
       playClickSound();
       modalOverlay.classList.remove("active");
-      startGame();
+      fetchRecommendedDifficulty();
     });
 
     function startGame() {

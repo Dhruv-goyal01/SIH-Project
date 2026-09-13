@@ -179,13 +179,16 @@ function nbSetAvatar(imgId, fallbackId, patient){
   img.src = `assets/${patient.id}.jpg`;
 }
 
-function nbRenderCareLog(id){
+async function nbRenderCareLog(id){
   const careLogEntries = document.getElementById('careLogEntries');
   if (!careLogEntries) return;
-  const entries = nbGetCareLog(id);
+  const entries = await nbFetchCareLog(id);
 
   careLogEntries.innerHTML = '';
-  entries.forEach((entryText, index) => {
+  entries.forEach((item, index) => {
+    const entryText = typeof item === 'object' ? item.entry_text : item;
+    const entryId = typeof item === 'object' ? item.id : index;
+
     const row = document.createElement('div');
     row.className = 'care-log-entry';
 
@@ -199,9 +202,9 @@ function nbRenderCareLog(id){
     deleteBtn.className = 'care-log-delete-btn';
     deleteBtn.title = 'Delete this note';
     deleteBtn.textContent = '✕';
-    deleteBtn.addEventListener('click', () => {
-      nbRemoveCareLogEntry(id, index);
-      nbRenderCareLog(id);
+    deleteBtn.addEventListener('click', async () => {
+      await nbRemoveCareLogEntry(id, entryId, index);
+      await nbRenderCareLog(id);
       if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
     });
     row.appendChild(deleteBtn);
@@ -236,17 +239,17 @@ if (patientSelect) {
 const quickNoteInput = document.getElementById('quickNoteInput');
 
 if (quickNoteInput) {
-  quickNoteInput.addEventListener('keydown', (e) => {
+  quickNoteInput.addEventListener('keydown', async (e) => {
     if (e.key !== 'Enter') return;
     const text = quickNoteInput.value.trim();
     if (!text) return;
 
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const activeId = nbGetActivePatientId();
-    nbAddCareLogEntry(activeId, `${time}: (Caregiver log) ${text}`);
-    nbRenderCareLog(activeId);
-    if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
     quickNoteInput.value = '';
+    await nbAddCareLogEntry(activeId, `${time}: (Caregiver log) ${text}`);
+    await nbRenderCareLog(activeId);
+    if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
   });
 }
 

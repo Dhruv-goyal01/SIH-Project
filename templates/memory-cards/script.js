@@ -87,6 +87,40 @@ let patientId = 1;
 let gameSessionId = null;
 let gameStartTime = null;
 let mistakes = 0;
+let aiRecommendedDifficulty = 'easy'; // set by ML API
+
+// ── Auto-start with AI difficulty on page load ───────────────────────────
+async function fetchRecommendedDifficulty() {
+  try {
+    const res  = await fetch(`/api/memory-card/recommend-difficulty/${patientId}`);
+    const data = await res.json();
+
+    if (res.ok && data.recommended_difficulty) {
+      aiRecommendedDifficulty = data.recommended_difficulty;
+      currentDifficulty       = data.recommended_difficulty;
+      console.log('[AI] Auto-starting at difficulty:', data.recommended_difficulty, '| Reason:', data.reason);
+    }
+  } catch (err) {
+    console.warn('[AI] Could not fetch difficulty, defaulting to easy:', err);
+    currentDifficulty = 'easy';
+  }
+
+  // Auto-start the game immediately
+  await startGame(currentDifficulty);
+
+  // Show the AI difficulty badge in the game banner
+  const banner = document.getElementById('ai-difficulty-banner');
+  if (banner) {
+    banner.textContent = `🤖 ${currentDifficulty.toUpperCase()}`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', fetchRecommendedDifficulty);
+
+// Restart with a fresh AI recommendation
+async function restartWithAI() {
+  await fetchRecommendedDifficulty();
+}
 
 // Fisher-Yates array shuffle
 function shuffle(array) {

@@ -10,7 +10,8 @@
 
 <body>
   <div class="game-container">
-    <div class="modal-overlay active" id="start-screen">
+    <!-- Start screen hidden - game auto-starts with AI difficulty -->
+    <div class="modal-overlay" id="start-screen">
       <div class="modal-content">
         <h3> 📋Rules</h3>
         <p style="text-align: left; font-size: 0.95rem; line-height: 1.5;">
@@ -26,9 +27,31 @@
           <button class="action-btn level-btn medium-btn" data-level="medium">Medium (5s)</button>
           <button class="action-btn level-btn hard-btn" data-level="hard">Hard (3s)</button>
         </div>
+
+        <!-- AI Difficulty Badge (populated by ML API via script.js) -->
+        <div id="ai-difficulty-badge" style="
+            display: none;
+            margin: 12px auto 4px;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            border: 1px solid #6d28d9;
+            border-radius: 10px;
+            padding: 9px 14px;
+            color: #e0e7ff;
+            font-size: 0.83rem;
+            text-align: center;
+            line-height: 1.6;
+        "></div>
+
       </div>
     </div>
-    <div class="header-bar"><h2> 💡Memory Recall Challenge</h2></div>
+    <div class="header-bar">
+      <h2> 💡Memory Recall Challenge</h2>
+      <span id="ai-difficulty-banner" style="
+          background: linear-gradient(135deg, #7c3aed, #4c1d95);
+          border-radius: 8px; padding: 2px 10px;
+          font-size: 0.78em; color: #e0e7ff; margin-left: 8px;
+      "></span>
+    </div>
     <div class="score-board">Score: <span id="game-score">0</span></div>
     <div class="timer" id="timer">Memorize: 5s</div>
     

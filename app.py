@@ -20,9 +20,11 @@ APIs:
     GET  /api/memory-card/game/history/<patient_id>
     GET  /api/memory-card/game/progress/<patient_id>
     GET  /api/memory-card/game/progress/history/<patient_id>
+    GET  /api/memory-card/recommend-difficulty/<patient_id>  ← ML
 
   Phrase Recall game:
     POST /api/phrase-recall/game/complete
+    GET  /api/phrase-recall/recommend-difficulty/<patient_id> ← ML
 
   Caretaker:
     GET  /api/caretaker/patients
@@ -38,6 +40,7 @@ from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from ml_model import memory_card_predictor, phrase_recall_predictor
 
 # ---------------------------------------------------------------------------
 # Load environment variables from .env
@@ -592,15 +595,100 @@ def caretaker_add_care_log(patient_id):
                 return jsonify({"error": "Patient not found"}), 404
 
             cur.execute(
-                "INSERT INTO care_log_entries (patient_id, entry_text) VALUES (%s, %s) RETURNING id",
+                "INSERT INTO care_log_entries (patient_id, entry_text) VALUES (%s, %s) RETURNING id, created_at",
                 (patient_id, data["entry_text"]),
             )
-            entry_id = cur.fetchone()["id"]
+            row = cur.fetchone()
+            entry_id = row["id"]
+            created_at = row["created_at"].isoformat() if row.get("created_at") else None
         conn.commit()
     finally:
         conn.close()
 
-    return jsonify({"message": "Care log entry added", "entry_id": entry_id}), 201
+    return jsonify({"message": "Care log entry added", "entry_id": entry_id, "created_at": created_at}), 201
+
+
+@app.route("/api/caretaker/patients/<int:patient_id>/care-log/<int:entry_id>", methods=["DELETE"])
+def caretaker_delete_care_log(patient_id, entry_id):
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM care_log_entries WHERE id = %s AND patient_id = %s RETURNING id",
+                (entry_id, patient_id),
+            )
+            deleted = cur.fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+
+    if not deleted:
+        return jsonify({"error": "Care log entry not found"}), 404
+
+    return jsonify({"message": "Care log entry deleted"}), 200
+
+
+# ===========================================================================
+# ML — ADAPTIVE DIFFICULTY RECOMMENDATION
+# ===========================================================================
+
+@app.route("/api/memory-card/recommend-difficulty/<int:patient_id>", methods=["GET"])
+def memory_card_recommend_difficulty(patient_id):
+    """Return AI-recommended difficulty for the Memory Card game."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
+
+            cur.execute(
+                """SELECT accuracy, time_taken, mistakes, score, difficulty
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1
+                   ORDER BY id ASC""",
+                (patient_id,),
+            )
+            sessions = [dict(s) for s in cur.fetchall()]
+    finally:
+        conn.close()
+
+    result = memory_card_predictor.predict(sessions)
+    result["patient_id"] = patient_id
+    result["game"] = "memory_card"
+    return jsonify(result), 200
+
+
+@app.route("/api/phrase-recall/recommend-difficulty/<int:patient_id>", methods=["GET"])
+def phrase_recall_recommend_difficulty(patient_id):
+    """Return AI-recommended difficulty for the Phrase Recall game."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
+
+            cur.execute(
+                """SELECT
+                       CASE WHEN correct = 1 THEN 100.0 ELSE 0.0 END AS accuracy,
+                       0.0  AS time_taken,
+                       CASE WHEN correct = 1 THEN 0 ELSE 1 END AS mistakes,
+                       score,
+                       difficulty
+                   FROM phrase_recall_sessions
+                   WHERE patient_id = %s
+                   ORDER BY id ASC""",
+                (patient_id,),
+            )
+            sessions = [dict(s) for s in cur.fetchall()]
+    finally:
+        conn.close()
+
+    result = phrase_recall_predictor.predict(sessions)
+    result["patient_id"] = patient_id
+    result["game"] = "phrase_recall"
+    return jsonify(result), 200
 
 
 # ===========================================================================

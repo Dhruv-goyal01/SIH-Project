@@ -137,20 +137,71 @@ function nbSetActivePatientId(id){
   localStorage.setItem(NB_ACTIVE_KEY, id);
 }
 
-function nbGetCareLog(id){
+function nbGetNumericPatientId(id){
+  if (typeof id === 'number') return id;
+  const map = {
+    'arundhati': 1,
+    'kamala-devi': 2,
+    'rakesh-verma': 3
+  };
+  return map[id] || 1;
+}
+
+async function nbFetchCareLog(id){
+  const numId = nbGetNumericPatientId(id);
+  try {
+    const res = await fetch(`/api/caretaker/patients/${numId}/care-log`);
+    if (res.ok) {
+      const data = await res.json();
+      return data.entries || [];
+    }
+  } catch (err) {
+    console.warn('Could not fetch care log from API, using fallback:', err);
+  }
   const raw = localStorage.getItem(NB_CARELOG_KEY_PREFIX + id);
   return raw ? JSON.parse(raw) : [
-    '8:15 AM: (System) Daily routine loaded.'
+    { id: 'local-1', entry_text: '8:15 AM: (System) Daily routine loaded.' }
   ];
 }
 
-function nbAddCareLogEntry(id, entryText){
+function nbGetCareLog(id){
+  const raw = localStorage.getItem(NB_CARELOG_KEY_PREFIX + id);
+  return raw ? JSON.parse(raw) : [
+    { id: 'local-1', entry_text: '8:15 AM: (System) Daily routine loaded.' }
+  ];
+}
+
+async function nbAddCareLogEntry(id, entryText){
+  const numId = nbGetNumericPatientId(id);
+  try {
+    const res = await fetch(`/api/caretaker/patients/${numId}/care-log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entry_text: entryText })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err) {
+    console.warn('Could not POST care log to API, fallback to localStorage:', err);
+  }
   const entries = nbGetCareLog(id);
-  entries.unshift(entryText);
+  entries.unshift({ id: Date.now(), entry_text: entryText });
   localStorage.setItem(NB_CARELOG_KEY_PREFIX + id, JSON.stringify(entries));
 }
 
-function nbRemoveCareLogEntry(id, index){
+async function nbRemoveCareLogEntry(id, entryId, index){
+  const numId = nbGetNumericPatientId(id);
+  if (typeof entryId === 'number' || (typeof entryId === 'string' && !entryId.startsWith('local-'))) {
+    try {
+      await fetch(`/api/caretaker/patients/${numId}/care-log/${entryId}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.warn('Could not DELETE care log entry via API:', err);
+    }
+  }
   const entries = nbGetCareLog(id);
   entries.splice(index, 1);
   localStorage.setItem(NB_CARELOG_KEY_PREFIX + id, JSON.stringify(entries));
