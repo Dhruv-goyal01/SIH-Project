@@ -149,23 +149,21 @@ body {
   box-shadow: var(--shadow-pop);
   padding: 18px;
   z-index: 20;
-  /* Closed state: hidden, slightly raised and shrunk so it can slide + fade in */
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-12px) scale(0.96);
+  transform: scaleY(0.7) translateY(-6px);
   transform-origin: top right;
   pointer-events: none;
-  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.28s;
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0.25s;
 }
 .settings-panel.open {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
+  transform: scaleY(1) translateY(0);
   pointer-events: auto;
-  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Settings button now shows an icon + label instead of a bare glyph */
 .icon-btn.settings-btn {
   width: auto;
   height: 40px;
@@ -496,7 +494,29 @@ body {
 .hint-note { margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); font-weight: 600; }
 
 /* Schedule card */
-.schedule { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+.schedule-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.schedule-head h2 { margin: 0; }
+
+.schedule-add-btn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--teal);
+  color: var(--white);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.schedule-add-btn:hover { background: var(--teal-deep); transform: scale(1.06); }
+
+.schedule { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; margin-top: 16px; }
 
 .schedule-item {
   display: flex;
@@ -509,15 +529,21 @@ body {
 .schedule-item:last-child { border-bottom: none; }
 
 .s-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: var(--yellow-tint);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.s-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .s-time {
@@ -528,7 +554,25 @@ body {
   flex-shrink: 0;
 }
 
-.s-desc { color: var(--ink); font-weight: 600; }
+.s-desc { color: var(--ink); font-weight: 600; flex: 1; }
+
+.s-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.s-action-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 8px;
+  background: var(--cream-deep);
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.s-action-btn:hover { background: var(--teal-tint); color: var(--teal-deep); }
+.s-delete-btn:hover { background: var(--coral-tint); color: #B23B3B; }
 
 .care-log {
   margin-top: 10px;
@@ -576,6 +620,77 @@ body {
   color: var(--ink);
 }
 .quick-note:focus { outline: 2px solid var(--teal); background: var(--white); }
+
+/* Icon picker (used in the schedule item editor) */
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.icon-picker-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1.5px solid var(--line);
+  background: var(--cream-deep);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.icon-picker-btn svg { width: 24px; height: 24px; display: block; }
+.icon-picker-btn:hover {
+  background: var(--teal-tint);
+  border-color: var(--teal);
+  color: var(--teal-deep);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+.icon-picker-btn.active {
+  background: var(--teal-tint);
+  border-color: var(--teal-deep);
+  box-shadow: 0 4px 14px rgba(59, 107, 59, 0.2);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Generic modal (schedule editor + add training profile) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(46, 46, 46, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+.modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.2s ease;
+}
+.modal-box {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow-pop);
+  transform: translateY(10px) scale(0.97);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+.modal-overlay.open .modal-box {
+  transform: translateY(0) scale(1);
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.modal-head h3 { margin: 0; font-size: 16px; color: var(--teal-deep); }
 
 /* Training Profiles section */
 .row-3 { grid-template-columns: 1fr; }
@@ -970,4 +1085,79 @@ body {
   font-size: 13.5px;
   color: var(--ink);
   line-height: 1.5;
+}
+
+/* ============================================================
+   Dark Mode Theme Overrides
+   ============================================================ */
+body.dark-mode {
+  --cream:        #121814;
+  --cream-deep:   #1A231C;
+  --teal:         #4E8B4E;
+  --teal-deep:    #65A765;
+  --teal-tint:    #1E3022;
+  --blue:         #5294D4;
+  --blue-tint:    #1A2A38;
+  --yellow:       #F5C258;
+  --yellow-tint:  #2D2617;
+  --green:        #A3D4B9;
+  --green-tint:   #1C3026;
+  --purple:       #B094F0;
+  --purple-tint:  #292038;
+  --coral:        #EE8888;
+  --coral-tint:   #3B2222;
+  --ink:          #E8EBE4;
+  --ink-soft:     #A3AD9E;
+  --line:         #2A362C;
+  --white:        #1A241C;
+
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-pop:  0 10px 35px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .slider {
+  background: #2D3A30;
+}
+
+body.dark-mode .banner {
+  background: linear-gradient(120deg, #244224 0%, #162B16 100%);
+}
+
+body.dark-mode .care-log {
+  background: #2B2314;
+  color: #E5C378;
+}
+body.dark-mode .care-log b {
+  color: #F4D693;
+}
+body.dark-mode .care-log-entry {
+  border-top-color: rgba(229, 195, 120, 0.2);
+  color: #E5C378;
+}
+body.dark-mode .care-log-delete-btn {
+  color: #E5C378;
+}
+body.dark-mode .care-log-delete-btn:hover {
+  color: #FF7777;
+}
+
+body.dark-mode .care-logs-tip,
+body.dark-mode .tag-row span,
+body.dark-mode .tag-row .tag {
+  background: #2B2314;
+  color: #E5C378;
+}
+
+body.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .s-action-btn:hover {
+  background: #2A3B2D;
+  color: #65A765;
+}
+
+body.dark-mode .icon-picker-btn.active {
+  background: #1E3322;
+  border-color: #65A765;
 }

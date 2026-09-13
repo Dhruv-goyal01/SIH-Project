@@ -81,20 +81,7 @@ function nbRenderPatient(id){
   });
 
   // Today's Schedule
-  const scheduleList = document.getElementById('scheduleList');
-  if (scheduleList) {
-    scheduleList.innerHTML = '';
-    if (patient.schedule.length === 0) {
-      scheduleList.innerHTML = '<div class="schedule-item"><span class="s-desc">No items scheduled.</span></div>';
-    } else {
-      patient.schedule.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'schedule-item';
-        row.innerHTML = `<div class="s-icon">${item.icon}</div><span class="s-time">${item.time}</span><span class="s-desc">${item.desc}</span>`;
-        scheduleList.appendChild(row);
-      });
-    }
-  }
+  nbRenderSchedule(patient.id);
 
   // Care Logs 
   nbRenderCareLog(patient.id);
@@ -145,12 +132,82 @@ function nbRenderTrainingProfiles(id){
   });
 }
 
+// Top "+" on the Training Profiles card opens an inline form instead of
+// navigating away, so caretakers can add a profile without leaving the dashboard.
 const trainingAddBtn = document.getElementById('trainingAddBtn');
 if (trainingAddBtn) {
   trainingAddBtn.addEventListener('click', () => {
-    window.location.href = `/caretaker/add-training-profile.html?patient=${nbGetActivePatientId()}`;
+    nbOpenTrainingModal();
   });
 }
+
+let nbTrainingPhotoDataUrl = null;
+
+function nbOpenTrainingModal(){
+  const overlay = document.getElementById('trainingModalOverlay');
+  if (!overlay) return;
+
+  nbTrainingPhotoDataUrl = null;
+  document.getElementById('trainingNameInput').value = '';
+  document.getElementById('trainingRelationInput').value = '';
+  document.getElementById('trainingNameErrorWrap').style.display = 'none';
+
+  const preview = document.getElementById('trainingPhotoPreview');
+  preview.style.backgroundImage = '';
+  preview.textContent = '+';
+
+  overlay.classList.add('open');
+}
+
+function nbCloseTrainingModal(){
+  document.getElementById('trainingModalOverlay')?.classList.remove('open');
+}
+
+const trainingPhotoInput = document.getElementById('trainingPhotoInput');
+const trainingPhotoPreview = document.getElementById('trainingPhotoPreview');
+if (trainingPhotoInput) {
+  trainingPhotoInput.addEventListener('change', () => {
+    const file = trainingPhotoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      nbTrainingPhotoDataUrl = reader.result;
+      trainingPhotoPreview.style.backgroundImage = `url('${nbTrainingPhotoDataUrl}')`;
+      trainingPhotoPreview.textContent = '';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('trainingSaveBtn')?.addEventListener('click', () => {
+  const patientId = nbGetActivePatientId();
+  const name = document.getElementById('trainingNameInput').value.trim();
+  const relation = document.getElementById('trainingRelationInput').value.trim();
+  const errorWrap = document.getElementById('trainingNameErrorWrap');
+
+  if (!name) {
+    errorWrap.style.display = 'block';
+    document.getElementById('trainingNameInput').focus();
+    return;
+  }
+  errorWrap.style.display = 'none';
+
+  const fullName = relation ? `${name} (${relation})` : name;
+  nbAddTrainingProfile(patientId, {
+    id: `${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+    name: fullName,
+    initial: name.charAt(0).toUpperCase(),
+    photo: nbTrainingPhotoDataUrl
+  });
+
+  nbRenderTrainingProfiles(patientId);
+  nbCloseTrainingModal();
+});
+
+document.getElementById('trainingModalClose')?.addEventListener('click', nbCloseTrainingModal);
+document.getElementById('trainingModalOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'trainingModalOverlay') nbCloseTrainingModal();
+});
 
 function setText(id, text){
   const el = document.getElementById(id);
@@ -212,6 +269,170 @@ async function nbRenderCareLog(id){
     careLogEntries.appendChild(row);
   });
 }
+
+// Today's Schedule 
+// Rich, multi-colored SVG icons matching Image 2 design
+const NB_SCHEDULE_ICONS = {
+  pill: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(-45 12 12)"><rect x="7" y="4.5" width="10" height="7.5" rx="5" fill="#EF4444"/><rect x="7" y="12" width="10" height="7.5" rx="5" fill="#F59E0B"/><line x1="7" y1="12" x2="17" y2="12" stroke="#FFFFFF" stroke-width="1.2"/><path d="M9 7C9 6 10 5.5 11 5.5" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/></g></svg>',
+  meal: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5C4 16.2 7.6 20 12 20C16.4 20 20 16.2 20 11.5H4Z" fill="#8B5CF6"/><path d="M4 11.5C4 16.2 7.6 20 12 20C16.4 20 20 16.2 20 11.5H4Z" stroke="#7C3AED" stroke-width="1.2"/><ellipse cx="12" cy="11.5" rx="8" ry="3.2" fill="#F59E0B"/><circle cx="9.5" cy="11.5" r="1.3" fill="#EF4444"/><circle cx="14.2" cy="11" r="1.1" fill="#10B981"/><circle cx="12" cy="12.3" r="0.9" fill="#FFFFFF"/><path d="M2.5 11C1.8 11 1.5 10 2 9.5C2.5 9 3.5 9.5 4 10" stroke="#7C3AED" stroke-width="1.6" stroke-linecap="round"/><path d="M21.5 11C22.2 11 22.5 10 22 9.5C21.5 9 20.5 9.5 20 10" stroke="#7C3AED" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  walk: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="13" cy="4" r="2.3" fill="#6B21A8"/><path d="M10 8.5L7.8 11.2" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round"/><path d="M10.2 7.5H14.5C15.1 7.5 15.4 8.1 15.1 8.6L13.2 13.5H10.5L9.3 9C9.1 8.1 9.7 7.5 10.2 7.5Z" fill="#F59E0B"/><path d="M13.5 8.5L16.2 11.5" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round"/><path d="M11.2 13.5L8.5 19.8" stroke="#EA580C" stroke-width="2.6" stroke-linecap="round"/><path d="M12.6 13.5L15.2 16.8L14.2 20.2" stroke="#EA580C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  music: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 17V6L19 4V15" stroke="#8B5CF6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 9.5L19 7.5" stroke="#EC4899" stroke-width="2.2" stroke-linecap="round"/><circle cx="6.5" cy="17" r="2.8" fill="#EC4899"/><circle cx="16.5" cy="15" r="2.8" fill="#8B5CF6"/></svg>',
+  puzzle: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4H5V10C6.1 10 7 10.9 7 12C7 13.1 6.1 14 5 14V20H11C11 18.9 11.9 18 13 18C14.1 18 15 18.9 15 20H19V14C17.9 14 17 13.1 17 12C17 10.9 17.9 10 19 10V4H13C13 5.1 12.1 6 11 6C9.9 6 9 5.1 9 4Z" fill="#3B82F6" stroke="#1D4ED8" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12" cy="5" r="1.5" fill="#60A5FA"/><circle cx="18" cy="12" r="1.5" fill="#60A5FA"/></svg>',
+  sleep: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="#F59E0B" stroke="#D97706" stroke-width="1.2"/><path d="M18 4L18.6 5.4L20 6L18.6 6.6L18 8L17.4 6.6L16 6L17.4 5.4L18 4Z" fill="#A855F7"/><path d="M13 2L13.4 2.8L14.2 3.1L13.4 3.4L13 4.2L12.6 3.4L11.8 3.1L12.6 2.8L13 2Z" fill="#A855F7"/></svg>',
+  bath: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12H20V15C20 17.2 18.2 19 16 19H8C5.8 19 4 17.2 4 15V12Z" fill="#06B6D4" stroke="#0891B2" stroke-width="1.2"/><path d="M4 12V7C4 5.9 4.9 5 6 5C7.1 5 8 5.9 8 7V8" stroke="#64748B" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="7" r="1.2" fill="#38BDF8"/><circle cx="14.5" cy="5" r="1.4" fill="#38BDF8"/><circle cx="17" cy="8" r="1" fill="#38BDF8"/><line x1="6" y1="19" x2="5" y2="21" stroke="#64748B" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="19" x2="19" y2="21" stroke="#64748B" stroke-width="2" stroke-linecap="round"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 16V11C18 7.7 15.3 5 12 5C8.7 5 6 7.7 6 11V16L4 18H20L18 16Z" fill="#F59E0B" stroke="#D97706" stroke-width="1.2"/><path d="M10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20" stroke="#D97706" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="3" r="1.5" fill="#EF4444"/></svg>'
+};
+
+function nbRenderSchedule(id){
+  const scheduleList = document.getElementById('scheduleList');
+  if (!scheduleList) return;
+
+  const items = nbGetSchedule(id);
+  scheduleList.innerHTML = '';
+
+  if (items.length === 0) {
+    scheduleList.innerHTML = '<div class="schedule-item"><span class="s-desc">No items scheduled.</span></div>';
+    return;
+  }
+
+  items.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'schedule-item';
+
+    const iconMarkup = NB_SCHEDULE_ICONS[item.icon] || item.icon;
+
+    row.innerHTML = `
+      <div class="s-icon">${iconMarkup}</div>
+      <span class="s-time">${item.time}</span>
+      <span class="s-desc">${item.desc}</span>
+      <div class="s-actions">
+        <button type="button" class="s-action-btn s-edit-btn" title="Edit" aria-label="Edit schedule item">✎</button>
+        <button type="button" class="s-action-btn s-delete-btn" title="Delete" aria-label="Delete schedule item">🗑</button>
+      </div>
+    `;
+
+    row.querySelector('.s-edit-btn')?.addEventListener('click', () => nbOpenScheduleModal(id, index));
+    row.querySelector('.s-delete-btn')?.addEventListener('click', () => {
+      nbDeleteScheduleItem(id, index);
+      nbRenderSchedule(id);
+      if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
+    });
+
+    scheduleList.appendChild(row);
+  });
+}
+
+function nbRenderIconPicker(selectedKey){
+  const picker = document.getElementById('scheduleIconPicker');
+  if (!picker) return;
+
+  picker.innerHTML = '';
+  Object.keys(NB_SCHEDULE_ICONS).forEach(key => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-picker-btn' + (key === selectedKey ? ' active' : '');
+    btn.title = key;
+    btn.innerHTML = NB_SCHEDULE_ICONS[key];
+    btn.addEventListener('click', () => {
+      picker.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      picker.dataset.selected = key;
+    });
+    picker.appendChild(btn);
+  });
+  picker.dataset.selected = selectedKey || Object.keys(NB_SCHEDULE_ICONS)[0];
+}
+
+// "8:00 AM" -> "08:00" so it can seed an <input type="time">
+function nbTo24Hour(timeStr){
+  const match = /^(\d{1,2}):(\d{2})\s*([AP]M)$/i.exec((timeStr || '').trim());
+  if (!match) return '';
+  let [, h, m, ap] = match;
+  h = parseInt(h, 10);
+  if (ap.toUpperCase() === 'PM' && h !== 12) h += 12;
+  if (ap.toUpperCase() === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${m}`;
+}
+
+// "08:00" -> "8:00 AM" so it renders the way the rest of the schedule does
+function nbTo12Hour(timeStr){
+  const [h, m] = (timeStr || '').split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return timeStr;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${ap}`;
+}
+
+let nbScheduleEditIndex = null;
+
+function nbOpenScheduleModal(patientId, index){
+  const overlay = document.getElementById('scheduleModalOverlay');
+  const title = document.getElementById('scheduleModalTitle');
+  const timeInput = document.getElementById('scheduleTimeInput');
+  const descInput = document.getElementById('scheduleDescInput');
+  if (!overlay) return;
+
+  nbScheduleEditIndex = (typeof index === 'number') ? index : null;
+
+  if (nbScheduleEditIndex !== null) {
+    const items = nbGetSchedule(patientId);
+    const item = items[nbScheduleEditIndex];
+    if (title) title.textContent = 'Edit Schedule Item';
+    if (timeInput) timeInput.value = nbTo24Hour(item.time);
+    if (descInput) descInput.value = item.desc;
+    nbRenderIconPicker(NB_SCHEDULE_ICONS[item.icon] ? item.icon : Object.keys(NB_SCHEDULE_ICONS)[0]);
+  } else {
+    if (title) title.textContent = 'Add Schedule Item';
+    if (timeInput) timeInput.value = '';
+    if (descInput) descInput.value = '';
+    nbRenderIconPicker(Object.keys(NB_SCHEDULE_ICONS)[0]);
+  }
+
+  overlay.classList.add('open');
+}
+
+function nbCloseScheduleModal(){
+  document.getElementById('scheduleModalOverlay')?.classList.remove('open');
+  nbScheduleEditIndex = null;
+}
+
+document.getElementById('scheduleAddBtn')?.addEventListener('click', () => {
+  nbOpenScheduleModal(nbGetActivePatientId());
+});
+
+document.getElementById('scheduleSaveBtn')?.addEventListener('click', () => {
+  const patientId = nbGetActivePatientId();
+  const timeInput = document.getElementById('scheduleTimeInput');
+  const descInput = document.getElementById('scheduleDescInput');
+  const picker = document.getElementById('scheduleIconPicker');
+
+  const desc = descInput ? descInput.value.trim() : '';
+  const time24 = timeInput ? timeInput.value : '';
+  if (!desc || !time24) return;
+
+  const item = {
+    time: nbTo12Hour(time24),
+    desc,
+    icon: picker?.dataset.selected || Object.keys(NB_SCHEDULE_ICONS)[0]
+  };
+
+  const activePatientId = nbGetActivePatientId();
+  if (nbScheduleEditIndex !== null) {
+    nbUpdateScheduleItem(activePatientId, nbScheduleEditIndex, item);
+  } else {
+    nbAddScheduleItem(activePatientId, item);
+  }
+
+  nbRenderSchedule(activePatientId);
+  if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
+  nbCloseScheduleModal();
+});
+
+document.getElementById('scheduleModalClose')?.addEventListener('click', nbCloseScheduleModal);
+document.getElementById('scheduleModalOverlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'scheduleModalOverlay') nbCloseScheduleModal();
+});
 
 //  Patient switcher 
 const patientSelect = document.getElementById('patientSelect');
@@ -296,6 +517,17 @@ const notifToggle = document.getElementById('notifToggle');
 if (notifToggle) {
   notifToggle.addEventListener('change', () => {
     nbRenderPatient(nbGetActivePatientId());
+  });
+}
+
+// Dark mode toggle in Settings panel
+const darkModeToggle = document.getElementById('darkModeToggle');
+if (darkModeToggle) {
+  darkModeToggle.checked = typeof nbIsDarkMode === 'function' && nbIsDarkMode();
+  darkModeToggle.addEventListener('change', () => {
+    if (typeof nbSetDarkMode === 'function') {
+      nbSetDarkMode(darkModeToggle.checked);
+    }
   });
 }
 
