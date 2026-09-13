@@ -44,7 +44,10 @@
                 <button class="nav-pill">↗ Progress</button>
                 <button class="nav-pill">⏰ Reminders</button>
                 <div class="settings-wrap">
-                    <button class="icon-btn" id="settingsBtn">⚙</button>
+                    <button class="icon-btn settings-btn" id="settingsBtn">
+                        <span class="icon-btn-icon">⚙</span>
+                        <span class="icon-btn-label">Settings</span>
+                    </button>
                     <div class="settings-panel" id="settingsPanel">
                         <div class="settings-header">
                             <h3>Settings</h3>
@@ -118,7 +121,15 @@
                 <div class="tag-row" id="tagRow"></div>
                 <div class="game-list" id="gameList">
                     <a class="game-row" data-game="memory" href="analysis-memory.html">
-                        <div class="g-icon memory">🧩</div>
+                        <div class="g-icon memory">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                                <rect x="3.5" y="3.5" width="7" height="7" rx="1.8" />
+                                <rect x="13.5" y="3.5" width="7" height="7" rx="1.8" />
+                                <rect x="3.5" y="13.5" width="7" height="7" rx="1.8" />
+                                <rect x="13.5" y="13.5" width="7" height="7" rx="1.8" fill="currentColor" opacity="0.22" />
+                                <rect x="13.5" y="13.5" width="7" height="7" rx="1.8" />
+                            </svg>
+                        </div>
                         <div class="g-info">
                             <div class="g-name">Memory Match</div>
                             <div class="g-meta" id="memoryMeta">—</div>
@@ -126,7 +137,12 @@
                         <div class="g-arrow">›</div>
                     </a>
                     <a class="game-row" data-game="logic" href="analysis-logic.html">
-                        <div class="g-icon logic">🔷</div>
+                        <div class="g-icon logic">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                                <path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" />
+                                <circle cx="12" cy="12" r="2.3" fill="currentColor" stroke="none" />
+                            </svg>
+                        </div>
                         <div class="g-info">
                             <div class="g-name">Logic / Shapes</div>
                             <div class="g-meta" id="logicMeta">—</div>
@@ -134,7 +150,16 @@
                         <div class="g-arrow">›</div>
                     </a>
                     <a class="game-row" data-game="best" href="analysis-best.html">
-                        <div class="g-icon best">🏆</div>
+                        <div class="g-icon best">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+                                <path d="M4.5 5.5c-1 0-1.5.9-1.3 1.8.3 1.4 1.6 2.4 3.1 2.4h.7" />
+                                <path d="M19.5 5.5c1 0 1.5.9 1.3 1.8-.3 1.4-1.6 2.4-3.1 2.4h-.7" />
+                                <path d="M12 14v3.2" />
+                                <path d="M9 20h6" />
+                                <path d="M10 17.2h4v1.3a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1.3Z" />
+                            </svg>
+                        </div>
                         <div class="g-info">
                             <div class="g-name">Recent Best (Aggregate)</div>
                             <div class="g-meta" id="bestMeta">—</div>
@@ -153,6 +178,18 @@
                 </div>
                 <input type="text" id="quickNoteInput" class="quick-note" placeholder="Quick new caretaker note…"
                     autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="row row-3">
+            <div class="card training-card">
+                <div class="training-head">
+                    <h2><span class="dot"></span>Training Profiles</h2>
+                    <button class="training-add-btn" id="trainingAddBtn" title="Add a new training profile"
+                        aria-label="Add a new training profile">+</button>
+                </div>
+                <div class="training-grid" id="trainingGrid"></div>
             </div>
         </div>
 
