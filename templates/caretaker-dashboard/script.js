@@ -77,7 +77,7 @@ function nbRenderPatient(id){
 
   document.querySelectorAll('.game-row[data-game]').forEach(row => {
     const type = row.getAttribute('data-game');
-    row.href = `analysis-${type}.html?patient=${patient.id}`;
+    row.href = `/caretaker/analysis-${type}.html?patient=${patient.id}`;
   });
 
   // Today's Schedule
@@ -117,7 +117,7 @@ function nbRenderTrainingProfiles(id){
   if (profiles.length === 0) {
     const empty = document.createElement('a');
     empty.className = 'training-empty';
-    empty.href = `add-training-profile.html?patient=${id}`;
+    empty.href = `/caretaker/add-training-profile.html?patient=${id}`;
     empty.innerHTML = `
       <div class="training-empty-circle">+</div>
       <span class="training-name">Add profile</span>
@@ -136,7 +136,7 @@ function nbRenderTrainingProfiles(id){
     item.innerHTML = `
       <div class="training-avatar-wrap">
         <div class="training-avatar"${avatarBg}>${initials}</div>
-        <a class="training-avatar-add" href="add-training-profile.html?patient=${id}"
+        <a class="training-avatar-add" href="/caretaker/add-training-profile.html?patient=${id}"
            title="Add more training photos for ${p.name}" aria-label="Add more training photos for ${p.name}">+</a>
       </div>
       <span class="training-name" title="${p.name}">${p.name}</span>
@@ -148,7 +148,7 @@ function nbRenderTrainingProfiles(id){
 const trainingAddBtn = document.getElementById('trainingAddBtn');
 if (trainingAddBtn) {
   trainingAddBtn.addEventListener('click', () => {
-    window.location.href = `add-training-profile.html?patient=${nbGetActivePatientId()}`;
+    window.location.href = `/caretaker/add-training-profile.html?patient=${nbGetActivePatientId()}`;
   });
 }
 

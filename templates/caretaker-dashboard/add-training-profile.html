@@ -14,7 +14,7 @@
 <body>
     <div class="page-wrap">
 
-        <a class="back-link" id="backLink" href="index.html">‹ Back to Dashboard</a>
+        <a class="back-link" id="backLink" href="/caretaker/index.html">‹ Back to Dashboard</a>
 
         <div class="page-title-row">
             <div class="g-icon memory">
@@ -65,7 +65,7 @@
         const nbPatient = nbGetPatient(nbPatientId);
 
         document.getElementById('patientNameLabel').textContent = nbPatient.name;
-        document.getElementById('backLink').href = `index.html?patient=${nbPatientId}`;
+        document.getElementById('backLink').href = `/caretaker/index.html?patient=${nbPatientId}`;
 
         let nbPhotoDataUrl = null;
         const photoInput = document.getElementById('photoInput');
@@ -103,7 +103,7 @@
                 photo: nbPhotoDataUrl
             });
 
-            window.location.href = `index.html?patient=${nbPatientId}`;
+            window.location.href = `/caretaker/index.html?patient=${nbPatientId}`;
         });
     </script>
 </body>
