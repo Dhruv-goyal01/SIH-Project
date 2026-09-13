@@ -1,5 +1,5 @@
 """
-NeuroBloom — Consolidated Flask Backend (PostgreSQL edition)
+NeuroBloom — Consolidated Flask Backend (PostgreSQL)
 Serves all game frontends and provides a unified REST API.
 
 Pages:
@@ -33,21 +33,39 @@ APIs:
 """
 
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from database import init_db, get_db
+
+# ---------------------------------------------------------------------------
+# Load environment variables from .env
+# ---------------------------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+# ---------------------------------------------------------------------------
+# PostgreSQL connection
+# ---------------------------------------------------------------------------
+def get_db():
+    """Open and return a new PostgreSQL connection (rows behave like dicts)."""
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", "5432")),
+        dbname=os.getenv("DB_NAME", "neurobloom"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASSWORD", ""),
+        cursor_factory=RealDictCursor,
+    )
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 app = Flask(__name__, static_folder=None)
 CORS(app)
-
-# Initialise the database on startup
-init_db()
 
 
 # ---------------------------------------------------------------------------
@@ -63,9 +81,7 @@ def calculate_performance(moves, mistakes, time_taken):
 def send_template(path):
     """Serve a file relative to the templates/ directory."""
     full_path = os.path.join(TEMPLATES_DIR, path)
-    directory = os.path.dirname(full_path)
-    filename = os.path.basename(full_path)
-    return send_from_directory(directory, filename)
+    return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path))
 
 
 # ===========================================================================
@@ -96,6 +112,7 @@ def memory_flash_page():
 def caretaker_page():
     return send_template("caretaker-dashboard/index.html")
 
+
 @app.route("/caretaker/<path:filename>")
 def caretaker_static(filename):
     return send_from_directory(os.path.join(TEMPLATES_DIR, "caretaker-dashboard"), filename)
@@ -125,16 +142,17 @@ def memory_flash_static(filename):
     return send_from_directory(os.path.join(TEMPLATES_DIR, "memory-flash"), filename)
 
 
-# Memory Flash uses absolute /assets/ paths in its built HTML
 @app.route("/assets/<path:filename>")
 def memory_flash_assets(filename):
     return send_from_directory(
         os.path.join(TEMPLATES_DIR, "memory-flash", "assets"), filename
     )
 
+
 @app.route("/favicon.svg")
 def memory_flash_favicon():
     return send_from_directory(os.path.join(TEMPLATES_DIR, "memory-flash"), "favicon.svg")
+
 
 @app.route("/icons.svg")
 def memory_flash_icons():
@@ -200,7 +218,7 @@ def memory_card_start():
         return jsonify({"error": "Request body is required"}), 400
 
     patient_id = data.get("patient_id")
-    game_type = data.get("game_type", "memory_card")
+    game_type  = data.get("game_type", "memory_card")
     difficulty = data.get("difficulty", "easy")
 
     if not patient_id:
@@ -210,8 +228,7 @@ def memory_card_start():
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
-            patient = cur.fetchone()
-            if not patient:
+            if not cur.fetchone():
                 return jsonify({"error": "Patient not found"}), 404
 
             cur.execute(
@@ -240,23 +257,20 @@ def memory_card_complete():
     if not session_id:
         return jsonify({"error": "session_id is required"}), 400
 
-    moves = data.get("moves", 0)
+    moves      = data.get("moves", 0)
     time_taken = data.get("time_taken", 0)
-    mistakes = data.get("mistakes", 0)
-    completed = data.get("completed", 1)
+    mistakes   = data.get("mistakes", 0)
+    completed  = data.get("completed", 1)
 
-    perf = calculate_performance(moves, mistakes, time_taken)
+    perf     = calculate_performance(moves, mistakes, time_taken)
     accuracy = perf["accuracy"]
-    score = perf["score"]
+    score    = perf["score"]
 
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id FROM memory_card_sessions WHERE id = %s", (session_id,)
-            )
-            session = cur.fetchone()
-            if not session:
+            cur.execute("SELECT id FROM memory_card_sessions WHERE id = %s", (session_id,))
+            if not cur.fetchone():
                 return jsonify({"error": "Game session not found"}), 404
 
             cur.execute(
@@ -319,10 +333,10 @@ def memory_card_progress(patient_id):
 
             cur.execute(
                 """SELECT COUNT(*) AS total_games,
-                          AVG(accuracy) AS average_accuracy,
+                          AVG(accuracy)   AS average_accuracy,
                           AVG(time_taken) AS average_time,
-                          AVG(mistakes) AS average_mistakes,
-                          MAX(score) AS best_score
+                          AVG(mistakes)   AS average_mistakes,
+                          MAX(score)      AS best_score
                    FROM memory_card_sessions
                    WHERE patient_id = %s AND completed = 1""",
                 (patient_id,),
@@ -343,15 +357,15 @@ def memory_card_progress(patient_id):
     return jsonify({
         "patient_id": patient_id,
         "progress": {
-            "total_games": stats["total_games"],
-            "average_accuracy": round(float(stats["average_accuracy"] or 0), 2),
-            "average_time": round(float(stats["average_time"] or 0), 2),
-            "average_mistakes": round(float(stats["average_mistakes"] or 0), 2),
-            "best_score": round(float(stats["best_score"] or 0), 2),
-            "latest_accuracy": round(float(latest["accuracy"]) if latest else 0, 2),
-            "latest_score": round(float(latest["score"]) if latest else 0, 2),
-            "latest_time": round(float(latest["time_taken"]) if latest else 0, 2),
-            "latest_mistakes": latest["mistakes"] if latest else 0,
+            "total_games":       stats["total_games"],
+            "average_accuracy":  round(float(stats["average_accuracy"]  or 0), 2),
+            "average_time":      round(float(stats["average_time"]      or 0), 2),
+            "average_mistakes":  round(float(stats["average_mistakes"]  or 0), 2),
+            "best_score":        round(float(stats["best_score"]        or 0), 2),
+            "latest_accuracy":   round(float(latest["accuracy"])   if latest else 0, 2),
+            "latest_score":      round(float(latest["score"])      if latest else 0, 2),
+            "latest_time":       round(float(latest["time_taken"]) if latest else 0, 2),
+            "latest_mistakes":   latest["mistakes"] if latest else 0,
         },
     }), 200
 
@@ -379,12 +393,12 @@ def memory_card_progress_history(patient_id):
     progress = [
         {
             "game_number": i,
-            "session_id": s["id"],
-            "accuracy": s["accuracy"],
-            "score": s["score"],
-            "time_taken": s["time_taken"],
-            "mistakes": s["mistakes"],
-            "difficulty": s["difficulty"],
+            "session_id":  s["id"],
+            "accuracy":    s["accuracy"],
+            "score":       s["score"],
+            "time_taken":  s["time_taken"],
+            "mistakes":    s["mistakes"],
+            "difficulty":  s["difficulty"],
             "completed_at": s["completed_at"].isoformat() if s["completed_at"] else None,
         }
         for i, s in enumerate(sessions, start=1)
@@ -464,18 +478,16 @@ def caretaker_patient_summary(patient_id):
             if not patient:
                 return jsonify({"error": "Patient not found"}), 404
 
-            # Memory card stats
             cur.execute(
                 """SELECT COUNT(*) AS total_games,
                           AVG(accuracy) AS avg_accuracy,
-                          MAX(score) AS best_score
+                          MAX(score)    AS best_score
                    FROM memory_card_sessions
                    WHERE patient_id = %s AND completed = 1""",
                 (patient_id,),
             )
             mc_stats = cur.fetchone()
 
-            # Phrase recall stats
             cur.execute(
                 """SELECT COUNT(*) AS total_rounds,
                           SUM(CASE WHEN correct = 1 THEN 1 ELSE 0 END) AS correct_rounds,
@@ -491,14 +503,14 @@ def caretaker_patient_summary(patient_id):
     return jsonify({
         "patient": dict(patient),
         "memory_card": {
-            "total_games": mc_stats["total_games"],
+            "total_games":  mc_stats["total_games"],
             "avg_accuracy": round(float(mc_stats["avg_accuracy"] or 0), 2),
-            "best_score": round(float(mc_stats["best_score"] or 0), 2),
+            "best_score":   round(float(mc_stats["best_score"]   or 0), 2),
         },
         "phrase_recall": {
-            "total_rounds": pr_stats["total_rounds"],
+            "total_rounds":   pr_stats["total_rounds"],
             "correct_rounds": pr_stats["correct_rounds"] or 0,
-            "total_score": pr_stats["total_score"] or 0,
+            "total_score":    pr_stats["total_score"]    or 0,
         },
     }), 200
 
@@ -536,7 +548,7 @@ def caretaker_game_history(patient_id):
 
     return jsonify({
         "patient_id": patient_id,
-        "memory_card_sessions": [dict(s) for s in mc_sessions],
+        "memory_card_sessions":  [dict(s) for s in mc_sessions],
         "phrase_recall_sessions": [dict(s) for s in pr_sessions],
     }), 200
 
@@ -551,7 +563,8 @@ def caretaker_get_care_log(patient_id):
                 return jsonify({"error": "Patient not found"}), 404
 
             cur.execute(
-                """SELECT id, entry_text, created_at FROM care_log_entries
+                """SELECT id, entry_text, created_at
+                   FROM care_log_entries
                    WHERE patient_id = %s ORDER BY id DESC""",
                 (patient_id,),
             )
