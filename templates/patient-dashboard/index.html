@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
     content="NeuroBloom — Cognitive Assistant Dashboard for personalized cognitive wellness and memory games.">
-  <title>NeuroBloom — Cognitive Assistant</title>
+  <title>SmritiSanjivani — Cognitive Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -470,45 +470,36 @@
         <section class="notes-section" id="notes-section" aria-label="Family and Doctor Notes">
           <div class="section-header">
             <span class="section-header__icon">💕</span>
-            <h2 data-i18n="notes.title">Family & Doctor Notes</h2>
-            <span class="notification-dot" aria-label="New notification"></span>
+            <h2 data-i18n="notes.title">Family &amp; Doctor Notes</h2>
+            <span class="notification-dot" id="notes-notification-dot" aria-label="New notification"></span>
           </div>
 
-          <!-- Doctor Note -->
-          <article class="note-item note-item--doctor" id="note-doctor">
-            <div class="note-item__header">
-              <div class="note-item__author">
-                <div class="note-item__avatar">D</div>
-                <div>
-                  <span class="note-item__name">Dr. Sharma</span>
-                  <span class="note-item__role" data-i18n="notes.doctor_role"> (AIMS Guwahati)</span>
+          <!-- Dynamic notes rendered by JS from the backend care-log API -->
+          <div id="notes-list">
+            <!-- Doctor Note (static placeholder, shown until backend loads) -->
+            <article class="note-item note-item--doctor" id="note-doctor">
+              <div class="note-item__header">
+                <div class="note-item__author">
+                  <div class="note-item__avatar">D</div>
+                  <div>
+                    <span class="note-item__name">Dr. Sharma</span>
+                    <span class="note-item__role" data-i18n="notes.doctor_role"> (AIMS Guwahati)</span>
+                  </div>
+                  <span class="note-item__time">10:00 AM</span>
                 </div>
-                <span class="note-item__time">10:00 AM</span>
+                <span class="note-item__time" data-i18n="notes.doctor_time">10:00 AM</span>
               </div>
-              <span class="note-item__time" data-i18n="notes.doctor_time">10:00 AM</span>
-            </div>
-            <p class="note-item__message" data-i18n="notes.doctor_msg">Wonderful focus on the Memory Match game today,
-              Arundhati. Keep up this
-              regular morning play!</p>
-          </article>
+              <p class="note-item__message" data-i18n="notes.doctor_msg">Wonderful focus on the Memory Match game today,
+                Arundhati. Keep up this
+                regular morning play!</p>
+            </article>
+          </div>
 
-          <!-- Family Note -->
-          <article class="note-item note-item--family" id="note-family">
-            <div class="note-item__header">
-              <div class="note-item__author">
-                <div class="note-item__avatar">P</div>
-                <div>
-                  <span class="note-item__name">Priya</span>
-                  <span class="note-item__role" data-i18n="notes.family_role"> (Daughter)</span>
-                </div>
-                <span class="note-item__time">Yesterday</span>
-              </div>
-              <span class="note-item__time" data-i18n="notes.family_time">Yesterday</span>
-            </div>
-            <p class="note-item__message" data-i18n="notes.family_msg">We love you, Ma! Keep playing these nice memory
-              games. Riyan says hello from
-              Shillong!</p>
-          </article>
+          <!-- Live connection status badge -->
+          <div id="notes-live-badge" style="display:none; margin-top:8px; font-size:11px; color:#22c55e; font-weight:600; display:flex; align-items:center; gap:5px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;animation:pulse 1.5s infinite;"></span>
+            Live
+          </div>
         </section>
 
       </div><!-- /dashboard-grid -->
@@ -1178,67 +1169,6 @@
       }, 200);
     });
 
-    // ---- Dynamic Caretaker & Family Notes from PostgreSQL ----
-    async function loadPatientNotes() {
-      const notesList = document.getElementById('notes-list');
-      if (!notesList) return;
-
-      try {
-        const res = await fetch('/api/caretaker/patients/1/care-log');
-        if (!res.ok) return;
-        const data = await res.json();
-        const entries = data.entries || [];
-
-        if (entries.length === 0) return;
-
-        // Render dynamic notes followed by the doctor note
-        notesList.innerHTML = entries.map((entry, idx) => {
-          let text = entry.entry_text;
-          let timeDisplay = 'Just now';
-          let author = 'Caretaker';
-          let role = ' (Care Team)';
-          let avatar = 'C';
-          let itemClass = 'note-item--family';
-
-          // Extract time prefix if present e.g. "08:15 AM: (Caregiver log) Message"
-          const match = text.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM)?):\s*(?:\([^)]+\)\s*)?(.*)$/i);
-          if (match) {
-            timeDisplay = match[1];
-            text = match[2];
-          } else if (entry.created_at) {
-            try {
-              timeDisplay = new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } catch (e) {}
-          }
-
-          return `
-            <article class="note-item ${itemClass}" style="animation: fadeIn 0.4s ease;">
-              <div class="note-item__header">
-                <div class="note-item__author">
-                  <div class="note-item__avatar">${avatar}</div>
-                  <div>
-                    <span class="note-item__name">${author}</span>
-                    <span class="note-item__role">${role}</span>
-                  </div>
-                </div>
-                <span class="note-item__time">${timeDisplay}</span>
-              </div>
-              <p class="note-item__message">${text}</p>
-            </article>
-          `;
-        }).join('');
-
-      } catch (err) {
-        console.warn('Could not load dynamic patient notes:', err);
-      }
-    }
-
-    // Initial load
-    loadPatientNotes();
-
-    // Auto-refresh every 5 seconds so new messages from the caretaker appear automatically without manual reload
-    setInterval(loadPatientNotes, 5000);
-
     // =========================================================================
     // MEMORY BOOK (TODO LIST & GOOD / BAD MEMORIES)
     // =========================================================================
@@ -1590,5 +1520,121 @@
   </script>
 
 </body>
+
+<!-- ===== REAL-TIME NOTES via SSE — isolated script so it always runs ===== -->
+<script>
+(function initNotesSSE() {
+  const PATIENT_ID = 1; // Arundhati — DB patient ID
+  let notesFallbackTimer = null;
+
+  function buildNoteArticle(entry) {
+    let text = entry.entry_text || '';
+    let timeDisplay = 'Just now';
+
+    // Parse "08:15 AM: (Caregiver log) Message" prefix
+    const match = text.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM)?):\s*(?:\([^)]+\)\s*)?(.*)$/i);
+    if (match) {
+      timeDisplay = match[1];
+      text = match[2];
+    } else if (entry.created_at) {
+      try {
+        timeDisplay = new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {}
+    }
+
+    return `<article class="note-item note-item--family notes-live-entry" style="animation:fadeIn 0.45s ease;">
+      <div class="note-item__header">
+        <div class="note-item__author">
+          <div class="note-item__avatar">C</div>
+          <div>
+            <span class="note-item__name">Caretaker</span>
+            <span class="note-item__role"> (Care Team)</span>
+          </div>
+        </div>
+        <span class="note-item__time">${timeDisplay}</span>
+      </div>
+      <p class="note-item__message">${text}</p>
+    </article>`;
+  }
+
+  async function loadPatientNotes() {
+    const notesList = document.getElementById('notes-list');
+    if (!notesList) return;
+    try {
+      const res = await fetch('/api/caretaker/patients/' + PATIENT_ID + '/care-log');
+      if (!res.ok) return;
+      const data = await res.json();
+      const entries = data.entries || [];
+      if (entries.length === 0) return;
+
+      // Remove previous dynamic entries, keep static doctor note
+      notesList.querySelectorAll('.notes-live-entry').forEach(function(el) { el.remove(); });
+
+      // Build newest-first list
+      var html = '';
+      for (var i = 0; i < entries.length; i++) {
+        html += buildNoteArticle(entries[i]);
+      }
+      // Insert above the static doctor note
+      notesList.insertAdjacentHTML('afterbegin', html);
+    } catch (err) {
+      console.warn('[Notes] Could not load patient notes:', err);
+    }
+  }
+
+  function injectNewNote(entry) {
+    const notesList = document.getElementById('notes-list');
+    if (!notesList) return;
+    notesList.insertAdjacentHTML('afterbegin', buildNoteArticle(entry));
+
+    // Flash notification dot
+    const dot = document.getElementById('notes-notification-dot');
+    if (dot) {
+      dot.style.display = 'inline-block';
+      setTimeout(function() { dot.style.display = 'none'; }, 4000);
+    }
+  }
+
+  function connectSSE() {
+    var liveBadge = document.getElementById('notes-live-badge');
+    var source = new EventSource('/api/care-log/stream/' + PATIENT_ID);
+
+    source.addEventListener('connected', function() {
+      loadPatientNotes();
+      if (liveBadge) { liveBadge.style.display = 'flex'; }
+      clearInterval(notesFallbackTimer);
+      notesFallbackTimer = null;
+      console.log('[Notes] SSE connected — real-time updates active');
+    });
+
+    source.onmessage = function(event) {
+      try {
+        var entry = JSON.parse(event.data);
+        injectNewNote(entry);
+      } catch (e) {
+        console.warn('[Notes] SSE parse error:', e);
+      }
+    };
+
+    source.onerror = function() {
+      if (liveBadge) { liveBadge.style.display = 'none'; }
+      source.close();
+      console.warn('[Notes] SSE error — falling back to polling');
+      if (!notesFallbackTimer) {
+        loadPatientNotes();
+        notesFallbackTimer = setInterval(loadPatientNotes, 10000);
+      }
+      setTimeout(connectSSE, 15000);
+    };
+  }
+
+  // Start as soon as DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', connectSSE);
+  } else {
+    connectSSE();
+  }
+})();
+</script>
 
 </html>

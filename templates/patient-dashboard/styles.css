@@ -876,6 +876,10 @@ button {
   border-color: var(--border-light);
 }
 
+[data-theme="dark"] .notes-section::after {
+  background: linear-gradient(to bottom, transparent, var(--surface));
+}
+
 [data-theme="dark"] .note-item {
   background: #252a45 !important;
   border-color: rgba(255,255,255,0.08);
@@ -2180,10 +2184,49 @@ button {
   padding: var(--space-xl);
   box-shadow: var(--shadow-card);
   border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  max-height: 340px; /* cap height so it scrolls when notes accumulate */
+}
+
+/* The notes list scrolls, header stays fixed */
+#notes-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  /* Hide scrollbar — Chrome / Safari / Edge */
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE 10+ */
+  padding-right: 2px;          /* prevent content clipping on focus rings */
+}
+
+/* Hide scrollbar — WebKit */
+#notes-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Subtle fade at the bottom to hint there's more to scroll */
+.notes-section {
+  position: relative;
+}
+.notes-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--bg-card));
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .notes-section .section-header {
   position: relative;
+  flex-shrink: 0;  /* header never shrinks — always visible above scroll */
+  margin-bottom: var(--space-sm, 8px);
 }
 
 .notes-section .notification-dot {

@@ -35,10 +35,13 @@ APIs:
 """
 
 import os
+import json
+import queue
+import threading
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 from ml_model import memory_card_predictor, phrase_recall_predictor
 
@@ -69,6 +72,43 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 app = Flask(__name__, static_folder=None)
 CORS(app)
+
+# ---------------------------------------------------------------------------
+# SSE Broker — real-time care-log push to patient dashboard
+# ---------------------------------------------------------------------------
+# Maps patient_id (int) → list of queue.Queue objects (one per connected client)
+_sse_listeners: dict = {}
+_sse_lock = threading.Lock()
+
+
+def _sse_subscribe(patient_id: int) -> queue.Queue:
+    """Register a new SSE listener for a patient and return its queue."""
+    q = queue.Queue(maxsize=50)
+    with _sse_lock:
+        _sse_listeners.setdefault(patient_id, []).append(q)
+    return q
+
+
+def _sse_unsubscribe(patient_id: int, q: queue.Queue) -> None:
+    """Remove a disconnected listener."""
+    with _sse_lock:
+        listeners = _sse_listeners.get(patient_id, [])
+        if q in listeners:
+            listeners.remove(q)
+
+
+def _sse_broadcast(patient_id: int, payload: dict) -> None:
+    """Push a JSON payload to every listener registered for patient_id."""
+    data = json.dumps(payload)
+    with _sse_lock:
+        dead = []
+        for q in _sse_listeners.get(patient_id, []):
+            try:
+                q.put_nowait(data)
+            except queue.Full:
+                dead.append(q)
+        for q in dead:
+            _sse_listeners[patient_id].remove(q)
 
 
 # ---------------------------------------------------------------------------
@@ -605,7 +645,51 @@ def caretaker_add_care_log(patient_id):
     finally:
         conn.close()
 
+    # Broadcast the new entry to all SSE listeners for this patient
+    _sse_broadcast(patient_id, {
+        "id": entry_id,
+        "entry_text": data["entry_text"],
+        "created_at": created_at,
+    })
+
     return jsonify({"message": "Care log entry added", "entry_id": entry_id, "created_at": created_at}), 201
+
+
+# ---------------------------------------------------------------------------
+# SSE ENDPOINT — patient dashboard connects here for live care-log updates
+# ---------------------------------------------------------------------------
+
+@app.route("/api/care-log/stream/<int:patient_id>")
+def care_log_stream(patient_id):
+    """Server-Sent Events stream: sends new care-log entries to the patient dashboard in real time."""
+    q = _sse_subscribe(patient_id)
+
+    @stream_with_context
+    def event_generator():
+        # Send an initial heartbeat so the browser knows the connection is alive
+        yield "event: connected\ndata: {\"status\": \"connected\"}\n\n"
+        try:
+            while True:
+                try:
+                    # Block for up to 25 s; if no message, emit a keepalive comment
+                    data = q.get(timeout=25)
+                    yield f"data: {data}\n\n"
+                except queue.Empty:
+                    # SSE comment — keeps the connection alive through proxies / browsers
+                    yield ": keepalive\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            _sse_unsubscribe(patient_id, q)
+
+    return Response(
+        event_generator(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",   # Disable Nginx buffering
+        },
+    )
 
 
 @app.route("/api/caretaker/patients/<int:patient_id>/care-log/<int:entry_id>", methods=["DELETE"])
@@ -695,4 +779,5 @@ def phrase_recall_recommend_difficulty(patient_id):
 # Run
 # ===========================================================================
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # threaded=True is required for SSE — each streaming client gets its own thread
+    app.run(debug=True, port=5000, threaded=True)
