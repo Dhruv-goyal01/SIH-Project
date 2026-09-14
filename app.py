@@ -20,9 +20,11 @@ APIs:
     GET  /api/memory-card/game/history/<patient_id>
     GET  /api/memory-card/game/progress/<patient_id>
     GET  /api/memory-card/game/progress/history/<patient_id>
+    GET  /api/memory-card/recommend-difficulty/<patient_id>  ← ML
 
   Phrase Recall game:
     POST /api/phrase-recall/game/complete
+    GET  /api/phrase-recall/recommend-difficulty/<patient_id> ← ML
 
   Caretaker:
     GET  /api/caretaker/patients
@@ -33,11 +35,15 @@ APIs:
 """
 
 import os
+import json
+import queue
+import threading
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
+from ml_model import memory_card_predictor, phrase_recall_predictor
 
 # ---------------------------------------------------------------------------
 # Load environment variables from .env
@@ -66,6 +72,43 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 app = Flask(__name__, static_folder=None)
 CORS(app)
+
+# ---------------------------------------------------------------------------
+# SSE Broker — real-time care-log push to patient dashboard
+# ---------------------------------------------------------------------------
+# Maps patient_id (int) → list of queue.Queue objects (one per connected client)
+_sse_listeners: dict = {}
+_sse_lock = threading.Lock()
+
+
+def _sse_subscribe(patient_id: int) -> queue.Queue:
+    """Register a new SSE listener for a patient and return its queue."""
+    q = queue.Queue(maxsize=50)
+    with _sse_lock:
+        _sse_listeners.setdefault(patient_id, []).append(q)
+    return q
+
+
+def _sse_unsubscribe(patient_id: int, q: queue.Queue) -> None:
+    """Remove a disconnected listener."""
+    with _sse_lock:
+        listeners = _sse_listeners.get(patient_id, [])
+        if q in listeners:
+            listeners.remove(q)
+
+
+def _sse_broadcast(patient_id: int, payload: dict) -> None:
+    """Push a JSON payload to every listener registered for patient_id."""
+    data = json.dumps(payload)
+    with _sse_lock:
+        dead = []
+        for q in _sse_listeners.get(patient_id, []):
+            try:
+                q.put_nowait(data)
+            except queue.Full:
+                dead.append(q)
+        for q in dead:
+            _sse_listeners[patient_id].remove(q)
 
 
 # ---------------------------------------------------------------------------
@@ -592,19 +635,149 @@ def caretaker_add_care_log(patient_id):
                 return jsonify({"error": "Patient not found"}), 404
 
             cur.execute(
-                "INSERT INTO care_log_entries (patient_id, entry_text) VALUES (%s, %s) RETURNING id",
+                "INSERT INTO care_log_entries (patient_id, entry_text) VALUES (%s, %s) RETURNING id, created_at",
                 (patient_id, data["entry_text"]),
             )
-            entry_id = cur.fetchone()["id"]
+            row = cur.fetchone()
+            entry_id = row["id"]
+            created_at = row["created_at"].isoformat() if row.get("created_at") else None
         conn.commit()
     finally:
         conn.close()
 
-    return jsonify({"message": "Care log entry added", "entry_id": entry_id}), 201
+    # Broadcast the new entry to all SSE listeners for this patient
+    _sse_broadcast(patient_id, {
+        "id": entry_id,
+        "entry_text": data["entry_text"],
+        "created_at": created_at,
+    })
+
+    return jsonify({"message": "Care log entry added", "entry_id": entry_id, "created_at": created_at}), 201
+
+
+# ---------------------------------------------------------------------------
+# SSE ENDPOINT — patient dashboard connects here for live care-log updates
+# ---------------------------------------------------------------------------
+
+@app.route("/api/care-log/stream/<int:patient_id>")
+def care_log_stream(patient_id):
+    """Server-Sent Events stream: sends new care-log entries to the patient dashboard in real time."""
+    q = _sse_subscribe(patient_id)
+
+    @stream_with_context
+    def event_generator():
+        # Send an initial heartbeat so the browser knows the connection is alive
+        yield "event: connected\ndata: {\"status\": \"connected\"}\n\n"
+        try:
+            while True:
+                try:
+                    # Block for up to 25 s; if no message, emit a keepalive comment
+                    data = q.get(timeout=25)
+                    yield f"data: {data}\n\n"
+                except queue.Empty:
+                    # SSE comment — keeps the connection alive through proxies / browsers
+                    yield ": keepalive\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            _sse_unsubscribe(patient_id, q)
+
+    return Response(
+        event_generator(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",   # Disable Nginx buffering
+        },
+    )
+
+
+@app.route("/api/caretaker/patients/<int:patient_id>/care-log/<int:entry_id>", methods=["DELETE"])
+def caretaker_delete_care_log(patient_id, entry_id):
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM care_log_entries WHERE id = %s AND patient_id = %s RETURNING id",
+                (entry_id, patient_id),
+            )
+            deleted = cur.fetchone()
+        conn.commit()
+    finally:
+        conn.close()
+
+    if not deleted:
+        return jsonify({"error": "Care log entry not found"}), 404
+
+    return jsonify({"message": "Care log entry deleted"}), 200
+
+
+# ===========================================================================
+# ML — ADAPTIVE DIFFICULTY RECOMMENDATION
+# ===========================================================================
+
+@app.route("/api/memory-card/recommend-difficulty/<int:patient_id>", methods=["GET"])
+def memory_card_recommend_difficulty(patient_id):
+    """Return AI-recommended difficulty for the Memory Card game."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
+
+            cur.execute(
+                """SELECT accuracy, time_taken, mistakes, score, difficulty
+                   FROM memory_card_sessions
+                   WHERE patient_id = %s AND completed = 1
+                   ORDER BY id ASC""",
+                (patient_id,),
+            )
+            sessions = [dict(s) for s in cur.fetchall()]
+    finally:
+        conn.close()
+
+    result = memory_card_predictor.predict(sessions)
+    result["patient_id"] = patient_id
+    result["game"] = "memory_card"
+    return jsonify(result), 200
+
+
+@app.route("/api/phrase-recall/recommend-difficulty/<int:patient_id>", methods=["GET"])
+def phrase_recall_recommend_difficulty(patient_id):
+    """Return AI-recommended difficulty for the Phrase Recall game."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM patients WHERE id = %s", (patient_id,))
+            if not cur.fetchone():
+                return jsonify({"error": "Patient not found"}), 404
+
+            cur.execute(
+                """SELECT
+                       CASE WHEN correct = 1 THEN 100.0 ELSE 0.0 END AS accuracy,
+                       0.0  AS time_taken,
+                       CASE WHEN correct = 1 THEN 0 ELSE 1 END AS mistakes,
+                       score,
+                       difficulty
+                   FROM phrase_recall_sessions
+                   WHERE patient_id = %s
+                   ORDER BY id ASC""",
+                (patient_id,),
+            )
+            sessions = [dict(s) for s in cur.fetchall()]
+    finally:
+        conn.close()
+
+    result = phrase_recall_predictor.predict(sessions)
+    result["patient_id"] = patient_id
+    result["game"] = "phrase_recall"
+    return jsonify(result), 200
 
 
 # ===========================================================================
 # Run
 # ===========================================================================
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    # threaded=True is required for SSE — each streaming client gets its own thread
+    app.run(debug=True, port=5000, threaded=True)

@@ -228,7 +228,7 @@ const TRANSLATIONS = {
     "exercise.reminder": "Reminder set for <strong>11:30 AM</strong> (Medicine time)",
 
     // Notes Section
-    "notes.title": "Family & Doctor Notes",
+    "notes.title": "Caretaker's Notes",
     "notes.doctor_role": " (AIMS Guwahati)",
     "notes.doctor_time": "10:00 AM",
     "notes.doctor_msg": "Wonderful focus on the Memory Match game today, Arundhati. Keep up this regular morning play!",

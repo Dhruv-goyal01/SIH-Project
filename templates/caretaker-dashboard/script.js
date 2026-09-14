@@ -236,13 +236,16 @@ function nbSetAvatar(imgId, fallbackId, patient){
   img.src = `assets/${patient.id}.jpg`;
 }
 
-function nbRenderCareLog(id){
+async function nbRenderCareLog(id){
   const careLogEntries = document.getElementById('careLogEntries');
   if (!careLogEntries) return;
-  const entries = nbGetCareLog(id);
+  const entries = await nbFetchCareLog(id);
 
   careLogEntries.innerHTML = '';
-  entries.forEach((entryText, index) => {
+  entries.forEach((item, index) => {
+    const entryText = typeof item === 'object' ? item.entry_text : item;
+    const entryId = typeof item === 'object' ? item.id : index;
+
     const row = document.createElement('div');
     row.className = 'care-log-entry';
 
@@ -256,9 +259,9 @@ function nbRenderCareLog(id){
     deleteBtn.className = 'care-log-delete-btn';
     deleteBtn.title = 'Delete this note';
     deleteBtn.textContent = '✕';
-    deleteBtn.addEventListener('click', () => {
-      nbRemoveCareLogEntry(id, index);
-      nbRenderCareLog(id);
+    deleteBtn.addEventListener('click', async () => {
+      await nbRemoveCareLogEntry(id, entryId, index);
+      await nbRenderCareLog(id);
       if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
     });
     row.appendChild(deleteBtn);
@@ -453,21 +456,55 @@ if (patientSelect) {
   });
 }
 
-// Quick caretaker note
+// Quick caretaker note — with "Sent to patient" toast feedback
 const quickNoteInput = document.getElementById('quickNoteInput');
 
+// Inject a toast element for send-confirmation (created once, reused)
+(function injectSentToast() {
+  if (document.getElementById('nb-sent-toast')) return;
+  const toast = document.createElement('div');
+  toast.id = 'nb-sent-toast';
+  toast.style.cssText = [
+    'position:fixed', 'bottom:88px', 'right:24px', 'z-index:9999',
+    'background:linear-gradient(135deg,#22c55e,#16a34a)',
+    'color:#fff', 'font-weight:700', 'font-size:13px',
+    'padding:10px 18px', 'border-radius:24px',
+    'box-shadow:0 4px 20px rgba(34,197,94,0.35)',
+    'display:flex', 'align-items:center', 'gap:8px',
+    'opacity:0', 'transform:translateY(12px)',
+    'transition:opacity 0.3s ease,transform 0.3s ease',
+    'pointer-events:none'
+  ].join(';');
+  toast.innerHTML = '<span style="font-size:15px">✉</span> Sent to patient';
+  document.body.appendChild(toast);
+})();
+
+function nbShowSentToast() {
+  const toast = document.getElementById('nb-sent-toast');
+  if (!toast) return;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateY(0)';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(12px)';
+  }, 2500);
+}
+
 if (quickNoteInput) {
-  quickNoteInput.addEventListener('keydown', (e) => {
+  quickNoteInput.addEventListener('keydown', async (e) => {
     if (e.key !== 'Enter') return;
     const text = quickNoteInput.value.trim();
     if (!text) return;
 
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     const activeId = nbGetActivePatientId();
-    nbAddCareLogEntry(activeId, `${time}: (Caregiver log) ${text}`);
-    nbRenderCareLog(activeId);
-    if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
     quickNoteInput.value = '';
+    const result = await nbAddCareLogEntry(activeId, `${time}: (Caregiver log) ${text}`);
+    await nbRenderCareLog(activeId);
+    if (typeof nbApplyActiveTranslation === 'function') nbApplyActiveTranslation();
+    // Show confirmation toast — the SSE broadcast already pushed the note to the patient
+    nbShowSentToast();
   });
 }
 
