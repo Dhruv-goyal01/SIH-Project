@@ -41,10 +41,10 @@ const TRANSLATIONS = {
     "panel.logout": "লগ আউট",
 
     // Daily Quest Card
-    "quest.tag": "⭐ দৈনিক কুৱেষ্ট",
+    "quest.tag": "দৈনিক কুৱেষ্ট",
     "quest.streak_tag": "🔥 ১৪ দিনৰ ধাৰাবাহিকতা",
-    "quest.title": "দৈনিক কুৱেষ্ট · ব্যক্তিগত স্মৃতি আৰু পৰিয়াল চিনাক্তকৰণ",
-    "quest.meta": "আপোনাৰ পৰিয়ালৰ সদস্য আৰু স্মৃতি মনত পেলাওক · <strong>৩টা চমু প্ৰশ্ন</strong>",
+    "quest.title": "দৈনিক কুৱেষ্ট",
+    "quest.meta": "",
     "quest.start": "কুৱেষ্ট আৰম্ভ কৰক",
 
     // Quest Modal Header & Nav
@@ -165,10 +165,10 @@ const TRANSLATIONS = {
     "panel.logout": "Log Out",
 
     // Daily Quest Card
-    "quest.tag": "⭐ Daily Quest",
+    "quest.tag": "Daily Quest",
     "quest.streak_tag": "🔥 14-Day Streak",
-    "quest.title": "Daily Quest · Personal Memory & Family Recognition",
-    "quest.meta": "Recognize your family members & active memories · <strong>3 Quick Questions</strong>",
+    "quest.title": "Daily Quest",
+    "quest.meta": "",
     "quest.start": "Start Quest",
 
     // Quest Modal Header & Nav
@@ -289,10 +289,10 @@ const TRANSLATIONS = {
     "panel.logout": "লোক আউৎ",
 
     // Daily Quest Card
-    "quest.tag": "⭐ নোংমগী ক্বেস্ট",
+    "quest.tag": "নোংমগী ক্বেস্ট",
     "quest.streak_tag": "🔥 নুমিৎ ১৪ লেপ্পা লৈতনা",
-    "quest.title": "নোংমগী ক্বেস্ট · ইমুংগী মীশক অমসুং নিংশিংবা খঙদোকপা",
-    "quest.meta": "ইমুংগী মী অমসুং পুন্সিগী নিংশিংবা খঙদোকউ · <strong>তেম্বা ৱাহং ৩</strong>",
+    "quest.title": "নোংমগী ক্বেস্ট",
+    "quest.meta": "",
     "quest.start": "ক্বেস্ট হৌউ",
 
     // Quest Modal Header & Nav
@@ -413,10 +413,10 @@ const TRANSLATIONS = {
     "panel.logout": "Chhuahna (Logout)",
 
     // Daily Quest Card
-    "quest.tag": "⭐ Ni Tin Hna (Daily Quest)",
+    "quest.tag": "Ni Tin Hna (Daily Quest)",
     "quest.streak_tag": "🔥 Ni 14 Zawnin",
-    "quest.title": "Ni Tin Hna · Mahni Hriatna & Chhungte Hriatchhuah",
-    "quest.meta": "I chhungte leh thil tawn hriatchhuah lehna · <strong>Zawhna Tawi 3</strong>",
+    "quest.title": "Ni Tin Hna",
+    "quest.meta": "",
     "quest.start": "Tan Rawh",
 
     // Quest Modal Header & Nav

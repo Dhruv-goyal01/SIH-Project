@@ -36,9 +36,11 @@
 
       <!-- Top Right Header Actions: Memory Book -->
       <div class="header__actions">
-        <button class="header__memory-book-btn" id="btn-open-memory-book" aria-label="Open Memory Book" title="Memory Book">
+        <button class="header__memory-book-btn" id="btn-open-memory-book" aria-label="Open Memory Book"
+          title="Memory Book">
           <svg class="header__memory-book-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18 2H6c-1.2 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm12 16H6v-2h12v2zm0-4H6V6h12v10z"/>
+            <path
+              d="M18 2H6c-1.2 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm12 16H6v-2h12v2zm0-4H6V6h12v10z" />
           </svg>
           <span class="header__memory-book-label">Memory Book</span>
           <span class="header__memory-book-badge" id="memory-book-badge">3</span>
@@ -198,14 +200,10 @@
       <!-- ===== DAILY QUEST SECTION ===== -->
       <section class="greeting daily-quest" id="greeting" aria-label="Daily Quest">
         <button class="game-card game-card--quest" id="btn-daily-quest" aria-haspopup="dialog"
-          style="background-image: url('/static/patient-dashboard/assets/game-phrase-builder.jpg');">
+          style="background-image: url('/static/patient-dashboard/assets/quest-card-bg.jpg');">
           <div class="quest-glow-ring"></div>
           <div class="game-card__top">
             <div class="quest-tag-group">
-              <span class="game-card__tag quest-tag--featured">
-                <span class="quest-pulse-light"></span>
-                <span data-i18n="quest.tag">⭐ Daily Quest</span>
-              </span>
               <span class="quest-tag--streak" data-i18n="quest.streak_tag">🔥 14-Day Streak</span>
             </div>
             <div class="game-card__icon quest-icon--highlight">
@@ -216,13 +214,7 @@
           </div>
           <div class="quest-card-body-row">
             <div>
-              <h3 class="game-card__title quest-title-highlight" data-i18n="quest.title">Daily Quest · Personal Memory &
-                Family Recognition</h3>
-              <div class="game-card__meta quest-meta-highlight">
-                <span class="dot"></span>
-                <span data-i18n-html="quest.meta">Recognize your family members & active memories · <strong>3 Quick
-                    Questions</strong></span>
-              </div>
+              <h3 class="game-card__title quest-title-highlight" data-i18n="quest.title">Daily Quest</h3>
             </div>
             <div class="quest-cta-pill">
               <span data-i18n="quest.start">Start Quest</span>
@@ -647,14 +639,16 @@
       <div class="memory-book-panel__title">
         <div class="memory-book-panel__title-icon">
           <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18 2H6c-1.2 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm12 16H6v-2h12v2zm0-4H6V6h12v10z"/>
+            <path
+              d="M18 2H6c-1.2 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm12 16H6v-2h12v2zm0-4H6V6h12v10z" />
           </svg>
         </div>
         <span>Memory Book</span>
       </div>
       <button class="memory-book-panel__close" id="btn-close-memory-book" aria-label="Close Memory Book">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+          <path
+            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
         </svg>
       </button>
     </div>
@@ -663,13 +657,14 @@
     <div class="memory-book-tabs">
       <button class="mb-tab-btn active" id="mb-tab-todo" data-target="todo">
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
         </svg>
         <span>To-Do List</span>
       </button>
       <button class="mb-tab-btn" id="mb-tab-memories" data-target="memories">
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          <path
+            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
         </svg>
         <span>Memories</span>
       </button>
@@ -686,7 +681,8 @@
 
         <!-- Add Todo Item Input -->
         <div class="mb-add-row">
-          <input type="text" class="mb-add-input" id="mb-todo-input" placeholder="Add an important task (e.g., Take morning medicine)..." maxlength="80">
+          <input type="text" class="mb-add-input" id="mb-todo-input"
+            placeholder="Add an important task (e.g., Take morning medicine)..." maxlength="80">
           <button class="mb-add-btn" id="mb-todo-add-btn" aria-label="Add task" title="Add task">+</button>
         </div>
 
@@ -727,8 +723,10 @@
           </div>
 
           <div class="mb-memory-input-row">
-            <input type="text" class="mb-memory-input" id="mb-memory-input" placeholder="Record a memory or feeling..." maxlength="140">
-            <button class="mb-memory-add-btn" id="mb-memory-add-btn" aria-label="Save memory" title="Save memory">+</button>
+            <input type="text" class="mb-memory-input" id="mb-memory-input" placeholder="Record a memory or feeling..."
+              maxlength="140">
+            <button class="mb-memory-add-btn" id="mb-memory-add-btn" aria-label="Save memory"
+              title="Save memory">+</button>
           </div>
         </div>
       </section>
@@ -1241,7 +1239,7 @@
       function loadTodos() {
         const stored = localStorage.getItem('nb_memory_book_todos');
         if (stored) {
-          try { return JSON.parse(stored); } catch(e){}
+          try { return JSON.parse(stored); } catch (e) { }
         }
         return defaultTodos;
       }
@@ -1254,7 +1252,7 @@
       function loadMemories() {
         const stored = localStorage.getItem('nb_memory_book_memories');
         if (stored) {
-          try { return JSON.parse(stored); } catch(e){}
+          try { return JSON.parse(stored); } catch (e) { }
         }
         return defaultMemories;
       }
